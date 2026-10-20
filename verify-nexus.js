@@ -171,32 +171,60 @@ async function runVerification() {
     {
       name: '11. Autonomous Fleet Mission Lifecycle & State Machine',
       run: async () => {
-        // Create mission with automated candidate selection
+        // 1. Create mission with automated candidate selection
         const createRes = await apiPost('/api/missions', {
-          name: 'Telemetry Verification Sortie',
+          name: 'Autonomous Verification Sortie',
           type: 'PAYLOAD_DELIVERY',
           priority: 'HIGH',
           targetWorkstationId: 'ws-3'
         });
-        if (createRes.status !== 201 || !createRes.data.success) {
+        if (createRes.status !== 201 || !createRes.data.success || createRes.data.data.status !== 'READY') {
           throw new Error(`Mission creation failed: ${createRes.data?.message}`);
         }
         const msnId = createRes.data.data.id;
+        const robotId = createRes.data.data.robotId;
         const robotName = createRes.data.data.robotName;
 
-        // Start mission
+        // 2. Validate invalid destination rejection (HTTP 400)
+        const invalidDestRes = await apiPost('/api/missions', {
+          name: 'Invalid Sortie',
+          targetWorkstationId: 'invalid-destination-node'
+        });
+        if (invalidDestRes.status !== 400) {
+          throw new Error(`Expected HTTP 400 for invalid destination, got ${invalidDestRes.status}`);
+        }
+
+        // 3. Start mission (READY -> IN_TRANSIT)
         const startRes = await apiPost(`/api/missions/${msnId}/start`, {});
         if (startRes.status !== 200 || startRes.data.data.status !== 'IN_TRANSIT') {
           throw new Error(`Mission start failed: status ${startRes.status}`);
         }
 
-        // Complete mission
+        // 4. Validate busy robot conflict prevention (HTTP 409)
+        const conflictRes = await apiPost('/api/missions', {
+          name: 'Conflicting Sortie',
+          robotId: robotId,
+          targetWorkstationId: 'ws-1'
+        });
+        if (conflictRes.status !== 409) {
+          throw new Error(`Expected HTTP 409 for busy robot conflict, got ${conflictRes.status}`);
+        }
+
+        // 5. Complete mission (IN_TRANSIT -> COMPLETED)
         const completeRes = await apiPost(`/api/missions/${msnId}/complete`, {});
         if (completeRes.status !== 200 || completeRes.data.data.status !== 'COMPLETED') {
           throw new Error(`Mission complete failed: status ${completeRes.status}`);
         }
 
-        return `PASS: Lifecycle verified for ${msnId} (${robotName}). State transitions: READY -> IN_TRANSIT -> COMPLETED.`;
+        // 6. Validate re-dispatch sortie endpoint (HTTP 201)
+        const relaunchRes = await apiPost(`/api/missions/${msnId}/relaunch`, {});
+        if (relaunchRes.status !== 201 || !relaunchRes.data.success) {
+          throw new Error(`Mission relaunch failed: status ${relaunchRes.status}`);
+        }
+        // Clean up the relaunched mission
+        await apiPost(`/api/missions/${relaunchRes.data.data.id}/complete`, {});
+
+        return `PASS: Verified end-to-end for ${msnId} (${robotName}): Creation (READY) -> Invalid Dest (400) -> Dispatch (IN_TRANSIT) -> Busy Conflict (409) -> Completion (COMPLETED) -> Re-Dispatch (201).`;
       }
     },
     {

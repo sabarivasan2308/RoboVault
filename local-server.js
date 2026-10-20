@@ -826,6 +826,8 @@ const server = http.createServer(async (req, res) => {
           statusDistribution,
           categoryDistribution,
           activeProjectsCount: db.projects.filter(p => p.status === 'ACTIVE').length,
+          activeMissionsCount: (db.missions || []).filter(m => m.status === 'IN_TRANSIT' || m.status === 'READY').length,
+          readyMissionsCount: (db.missions || []).filter(m => m.status === 'READY').length,
           recentActivity: db.activityLogs.slice(0, 8),
           recentOverdue: db.checkouts.filter(c => c.status === 'OVERDUE' || (c.status === 'ISSUED' && new Date(c.dueDate) < new Date())),
           criticalAlerts: db.notifications.filter(n => n.severity === 'CRITICAL' && !n.read)
@@ -1359,12 +1361,17 @@ const server = http.createServer(async (req, res) => {
     // 17. Autonomous Fleet Missions
     if (pathname === '/api/missions' && method === 'GET') {
       const activeMission = (db.missions || []).find(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED');
+      const busyRobotIds = new Set((db.missions || []).filter(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED').map(m => m.robotId));
       return sendJson(res, 200, {
         success: true,
         data: db.missions || [],
         activeMission: activeMission || null,
         dynamicObstacles: activeDynamicObstacles,
-        availableRobots: db.devices.filter(d => d.status === 'AVAILABLE' || d.status === 'RUNNING')
+        availableRobots: db.devices.filter(d => (d.status === 'AVAILABLE' || d.status === 'RUNNING') && !busyRobotIds.has(d.id)),
+        allRobots: (db.devices || []).map(d => ({
+          ...d,
+          isBusy: busyRobotIds.has(d.id)
+        }))
       });
     }
 
@@ -1372,16 +1379,45 @@ const server = http.createServer(async (req, res) => {
       const body = await getJsonBody(req);
       const missionType = body.type || 'PAYLOAD_DELIVERY';
       const targetWsId = body.targetWorkstationId || 'ws-1';
-      const targetWs = WORKSTATION_COORDS[targetWsId] || WORKSTATION_COORDS['ws-1'];
+
+      // 1. Destination validation
+      if (!WORKSTATION_COORDS[targetWsId]) {
+        return sendJson(res, 400, {
+          success: false,
+          message: `Invalid destination workstation ID '${targetWsId}'. Must be one of: ${Object.keys(WORKSTATION_COORDS).join(', ')}.`
+        });
+      }
+      const targetWs = WORKSTATION_COORDS[targetWsId];
 
       let robot = null;
       let selectionReason = '';
 
+      // 2. Robot assignment & busy conflict check
       if (body.robotId) {
         robot = db.devices.find(d => d.id === body.robotId);
-        selectionReason = `Operator manually assigned ${robot ? robot.name : body.robotId} to mission.`;
+        if (!robot) {
+          return sendJson(res, 404, { success: false, message: `Robot with ID '${body.robotId}' not found.` });
+        }
+        const busyMission = (db.missions || []).find(m => m.robotId === robot.id && (m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED'));
+        if (busyMission) {
+          return sendJson(res, 409, {
+            success: false,
+            conflict: true,
+            message: `Conflict: Robot '${robot.name}' is already assigned to active mission ${busyMission.id} (${busyMission.status}). Select another robot or wait for mission completion.`
+          });
+        }
+        selectionReason = `Operator manually assigned ${robot.name} to mission.`;
       } else {
-        const selection = selectOptimalRobot(db, missionType, targetWsId);
+        const busyRobotIds = new Set((db.missions || []).filter(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED').map(m => m.robotId));
+        const freeCandidates = db.devices.filter(d => !busyRobotIds.has(d.id));
+        if (freeCandidates.length === 0) {
+          return sendJson(res, 409, {
+            success: false,
+            conflict: true,
+            message: 'Conflict: All operational robots in the fleet are currently engaged in active missions.'
+          });
+        }
+        const selection = selectOptimalRobot({ devices: freeCandidates }, missionType, targetWsId);
         robot = selection.selectedRobot;
         selectionReason = selection.reason;
       }
@@ -1398,8 +1434,11 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 409, { success: false, message: pathResult.message });
       }
 
+      const uniqueSuffix = Date.now().toString().slice(-6) + '-' + Math.floor(100 + Math.random() * 900);
+      const isAutoDispatch = body.autoDispatch === true;
+
       const mission = {
-        id: 'MSN-' + Date.now().toString().slice(-6),
+        id: 'MSN-' + uniqueSuffix,
         name: body.name || `Sortie to ${targetWs.label}`,
         type: missionType,
         priority: body.priority || 'MEDIUM',
@@ -1412,7 +1451,7 @@ const server = http.createServer(async (req, res) => {
         currentCoords: startPos,
         path: pathResult.path,
         currentStepIndex: 0,
-        status: 'READY',
+        status: isAutoDispatch ? 'IN_TRANSIT' : 'READY',
         progressPct: 0,
         pathLength: pathResult.pathLength,
         batteryConsumed: 0,
@@ -1422,12 +1461,69 @@ const server = http.createServer(async (req, res) => {
         completedAt: null
       };
 
+      if (isAutoDispatch) {
+        robot.status = 'IN_TRANSIT';
+        robot.mode = 'AUTONOMOUS_TRAVERSAL';
+      }
+
       if (!db.missions) db.missions = [];
       db.missions.unshift(mission);
       saveDb(db);
 
       logActivity('MISSION_CREATED', 'MISSION', mission.id, 'admin', `Configured autonomous mission: ${mission.name} assigned to ${robot.name}`);
-      return sendJson(res, 201, { success: true, message: 'Mission created with A* trajectory', data: mission });
+      return sendJson(res, 201, { success: true, message: `Mission created with A* trajectory (${mission.status})`, data: mission });
+    }
+
+    if (pathname.startsWith('/api/missions/') && pathname.endsWith('/relaunch') && method === 'POST') {
+      const id = pathname.split('/')[3];
+      const prev = (db.missions || []).find(m => m.id === id);
+      if (!prev) return sendJson(res, 404, { success: false, message: 'Mission to relaunch not found' });
+      
+      const robot = db.devices.find(d => d.id === prev.robotId) || db.devices[0];
+      const busyMission = (db.missions || []).find(m => m.robotId === robot.id && (m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED'));
+      if (busyMission) {
+        return sendJson(res, 409, {
+          success: false,
+          conflict: true,
+          message: `Conflict: Robot '${robot.name}' is currently busy on active mission ${busyMission.id}.`
+        });
+      }
+
+      const targetWs = WORKSTATION_COORDS[prev.targetWorkstationId] || WORKSTATION_COORDS['ws-1'];
+      const startPos = DOCK_COORDS[robot.id] || [0, 1];
+      const goalPos = targetWs.approach;
+      const pathResult = findAStarPath(startPos, goalPos, activeDynamicObstacles);
+
+      const uniqueSuffix = Date.now().toString().slice(-6) + '-' + Math.floor(100 + Math.random() * 900);
+      const newMission = {
+        id: 'MSN-' + uniqueSuffix,
+        name: prev.name.includes('(Re-run)') ? prev.name : `${prev.name} (Re-run)`,
+        type: prev.type,
+        priority: prev.priority,
+        robotId: robot.id,
+        robotName: robot.name,
+        targetWorkstationId: prev.targetWorkstationId,
+        targetWorkstationName: prev.targetWorkstationName,
+        startCoords: startPos,
+        targetCoords: goalPos,
+        currentCoords: startPos,
+        path: pathResult.path,
+        currentStepIndex: 0,
+        status: 'READY',
+        progressPct: 0,
+        pathLength: pathResult.pathLength,
+        batteryConsumed: 0,
+        elapsedSeconds: 0,
+        selectionReason: `Re-dispatched sortie based on ${prev.id} profile.`,
+        createdAt: new Date().toISOString(),
+        completedAt: null
+      };
+
+      if (!db.missions) db.missions = [];
+      db.missions.unshift(newMission);
+      saveDb(db);
+      logActivity('MISSION_CREATED', 'MISSION', newMission.id, 'admin', `Re-dispatched sortie: ${newMission.name}`);
+      return sendJson(res, 201, { success: true, message: 'Mission re-dispatched with fresh trajectory', data: newMission });
     }
 
     if (pathname.startsWith('/api/missions/') && pathname.endsWith('/start') && method === 'POST') {
@@ -2074,8 +2170,11 @@ function renderNexusUi() {
           <div class="grid-4">
             <div class="stat-card">
               <div class="stat-lbl">Active Autonomous Missions</div>
-              <div class="stat-val" style="color: var(--primary); font-size: 1.8rem;" id="dashActiveMsn">1 In-Transit</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted)"><a href="javascript:void(0)" onclick="switchTab('missions')" style="color: var(--primary);">Open Fleet Simulator →</a></div>
+              <div class="stat-val" style="color: var(--primary); font-size: 1.8rem;" id="dashActiveMsn">\${(d.activeMissionsCount !== undefined && d.activeMissionsCount > 0) ? (d.activeMissionsCount + ' Active') : '0 Active'}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <a href="javascript:void(0)" onclick="switchTab('missions')" style="color: var(--primary);">Open Simulator →</a>
+                <button class="btn btn-primary" style="padding: 2px 7px; font-size: 0.7rem; font-weight: 600;" onclick="switchTab('missions'); setTimeout(openNewMissionModal, 150);">+ New Mission</button>
+              </div>
             </div>
             <div class="stat-card">
               <div class="stat-lbl">Tracked Hardware Units</div>
@@ -3646,7 +3745,44 @@ function renderNexusUi() {
         '<line x1="' + (svgW / 2) + '" y1="0" x2="' + (svgW / 2) + '" y2="' + svgH + '" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>' +
         '<line x1="0" y1="' + (svgH / 2) + '" x2="' + svgW + '" y2="' + (svgH / 2) + '" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3"/>';
 
-      let activeMsnHtml = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No active mission. Configure and launch a mission below.</div>';
+      let activeMsnHtml = '<div style="background: rgba(6, 182, 212, 0.05); border: 1px dashed var(--border-accent); border-radius: 8px; padding: 1.1rem;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">' +
+          '<strong style="color: var(--primary); font-size: 0.95rem;">⚡ Quick Mission Dispatch</strong>' +
+          '<span class="badge badge-ACTIVE">Fleet Ready</span>' +
+        '</div>' +
+        '<form onsubmit="handleQuickDispatch(event)">' +
+          '<div class="form-group" style="margin-bottom: 0.6rem;">' +
+            '<label class="form-label" style="font-size: 0.75rem;">Mission Sortie Name</label>' +
+            '<input type="text" id="quick_msn_name" class="form-control" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;" value="Autonomous Sortie #' + Math.floor(100 + Math.random() * 900) + '" required>' +
+          '</div>' +
+          '<div class="form-group" style="margin-bottom: 0.6rem;">' +
+            '<label class="form-label" style="font-size: 0.75rem;">Target Destination Workstation *</label>' +
+            '<select id="quick_msn_target" class="form-control" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">' +
+              '<option value="ws-1">Rover Bay 1 (Zone A - Ground Robotics [2, 3])</option>' +
+              '<option value="ws-2">LIDAR Test Bench (Zone A - Ground Robotics [5, 3])</option>' +
+              '<option value="ws-3">Drone Helipad Alpha (Zone B - Aerial Flight Cage [10, 3])</option>' +
+              '<option value="ws-4">Bionic Arm Jig (Zone B - Aerial Flight Cage [13, 3])</option>' +
+              '<option value="ws-5">STM32 Station A (Zone C - Embedded AI [2, 6])</option>' +
+              '<option value="ws-6">Oscilloscope Station (Zone C - Embedded AI [5, 6])</option>' +
+              '<option value="ws-7">3D Printer Cell 1 (Zone D - Prototyping [10, 6])</option>' +
+              '<option value="ws-8">Motor Driver Bench (Zone D - Prototyping [13, 6])</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="form-group" style="margin-bottom: 0.75rem;">' +
+            '<label class="form-label" style="font-size: 0.75rem;">Assigned Robot</label>' +
+            '<select id="quick_msn_robot" class="form-control" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">' +
+              '<option value="">(Auto-Select Optimal Robot by Battery & Proximity)</option>' +
+              '<option value="dev-tb4-01">TurtleBot 4 (Alpha) - Ground Mobile Robot</option>' +
+              '<option value="dev-drone-04">Crazyflie Drone A1 - UAV Aerial Drone</option>' +
+              '<option value="dev-arm-02">Bionic Arm Workstation</option>' +
+            '</select>' +
+          '</div>' +
+          '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">' +
+            '<button type="submit" class="btn btn-primary" style="flex: 1; font-weight: 700; font-size: 0.82rem; padding: 0.55rem; background: linear-gradient(135deg, #06b6d4, #2563eb); border: none;">🚀 Plan & Dispatch Mission</button>' +
+            '<button type="button" class="btn btn-outline" onclick="openNewMissionModal()" style="font-size: 0.82rem; padding: 0.55rem;">Advanced...</button>' +
+          '</div>' +
+        '</form>' +
+      '</div>';
       if (activeMsn) {
         const isRunning = activeMsn.status === 'IN_TRANSIT';
         const isPaused = activeMsn.status === 'PAUSED';
@@ -3658,7 +3794,10 @@ function renderNexusUi() {
               '<span style="font-size: 0.75rem; color: var(--primary); font-family: monospace; font-weight: 700;">' + activeMsn.id + ' • ' + activeMsn.type + '</span>' +
               '<h3 style="font-size: 1.15rem; margin-top: 2px;">' + activeMsn.name + '</h3>' +
             '</div>' +
-            '<span class="badge" style="background: ' + (isRunning ? 'rgba(6, 182, 212, 0.15)' : isDone ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)') + '; color: ' + (isRunning ? 'var(--primary)' : isDone ? 'var(--success)' : 'var(--warning)') + ';">' + activeMsn.status + '</span>' +
+            '<div style="display: flex; gap: 0.35rem; align-items: center;">' +
+              '<span class="badge" style="background: ' + (isRunning ? 'rgba(6, 182, 212, 0.15)' : isDone ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)') + '; color: ' + (isRunning ? 'var(--primary)' : isDone ? 'var(--success)' : 'var(--warning)') + ';">' + activeMsn.status + '</span>' +
+              '<button class="btn btn-outline" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openNewMissionModal()">+ New</button>' +
+            '</div>' +
           '</div>' +
 
           '<div>' +
@@ -3688,17 +3827,31 @@ function renderNexusUi() {
           '</div>' +
 
           '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;">' +
-            (!isRunning && !isDone ? '<button class="btn btn-primary" onclick="startMission(&apos;' + activeMsn.id + '&apos;)">▶️ Start Traversal</button>' : '') +
+            (!isRunning && !isDone ? '<button class="btn btn-primary" style="background: var(--success); font-weight: 700;" onclick="startMission(&apos;' + activeMsn.id + '&apos;)">▶️ Start Traversal</button>' : '') +
             (isRunning ? '<button class="btn btn-outline" onclick="pauseMission(&apos;' + activeMsn.id + '&apos;)">⏸️ Pause</button>' : '') +
             (isPaused ? '<button class="btn btn-primary" onclick="resumeMission(&apos;' + activeMsn.id + '&apos;)">▶️ Resume</button>' : '') +
             (!isDone ? '<button class="btn btn-danger" onclick="abortMission(&apos;' + activeMsn.id + '&apos;)">⏹️ Abort</button>' : '') +
             (!isDone ? '<button class="btn btn-outline" onclick="completeMission(&apos;' + activeMsn.id + '&apos;)">🏁 Force Complete</button>' : '') +
             (isRunning ? '<button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="injectDynamicObstacle()">🚧 Inject Dynamic Hazard</button>' : '') +
+            (isDone ? '<button class="btn btn-primary" onclick="openNewMissionModal()">🚀 Launch Next Mission</button>' : '') +
+            (isDone ? '<button class="btn btn-outline" onclick="relaunchMission(&apos;' + activeMsn.id + '&apos;)">🔁 Re-Dispatch Sortie</button>' : '') +
           '</div>' +
         '</div>';
       }
 
       container.innerHTML = \`
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+          <div>
+            <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem;">🚀 Autonomous Fleet Mission Simulator</h2>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Real-Time Kinematic Grid (16x10 Nodes) • Deterministic A* Pathfinding • Multi-Agent Collision Avoidance</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn btn-primary" onclick="openNewMissionModal()" style="font-size: 0.92rem; padding: 0.55rem 1.25rem; font-weight: 700; background: linear-gradient(135deg, #06b6d4, #2563eb); border: none; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);">
+              🚀 + Create New Mission
+            </button>
+          </div>
+        </div>
+
         <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.6rem;">
             <span style="font-size: 1.2rem;">⚠️</span>
@@ -3751,6 +3904,7 @@ function renderNexusUi() {
                 <th>Target Station</th>
                 <th>Path Waypoints</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -3763,6 +3917,11 @@ function renderNexusUi() {
                   <td>\${m.targetWorkstationName}</td>
                   <td style="font-family: monospace;">\${m.pathLength} nodes</td>
                   <td><span class="badge" style="background: \${m.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.15)' : m.status === 'IN_TRANSIT' ? 'rgba(6, 182, 212, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: \${m.status === 'COMPLETED' ? 'var(--success)' : m.status === 'IN_TRANSIT' ? 'var(--primary)' : 'var(--danger)'};">\${m.status}</span></td>
+                  <td style="white-space: nowrap;">
+                    \${m.status === 'READY' ? \`<button class="btn btn-primary" style="padding: 2px 7px; font-size: 0.7rem; font-weight: 600;" onclick="startMission('\${m.id}')">▶️ Dispatch</button>\` : ''}
+                    \${m.status === 'IN_TRANSIT' ? \`<button class="btn btn-outline" style="padding: 2px 7px; font-size: 0.7rem;" onclick="completeMission('\${m.id}')">🏁 Complete</button>\` : ''}
+                    \${m.status === 'COMPLETED' || m.status === 'ABORTED' ? \`<button class="btn btn-outline" style="padding: 2px 7px; font-size: 0.7rem;" onclick="relaunchMission('\${m.id}')">🔁 Re-Dispatch</button>\` : ''}
+                  </td>
                 </tr>
               \`).join('')}
             </tbody>
@@ -4003,10 +4162,16 @@ function renderNexusUi() {
                   <label class="form-label">Robot Assignment</label>
                   <select id="msn_robot" class="form-control">
                     <option value="">(Auto-Select Optimal Robot by Battery & Proximity)</option>
-                    <option value="dev-tb4-01">TurtleBot 4 (Alpha) - Mobile Robot</option>
-                    <option value="dev-drone-04">Crazyflie Drone A1 - UAV</option>
+                    <option value="dev-tb4-01">TurtleBot 4 (Alpha) - Ground Mobile Robot</option>
+                    <option value="dev-drone-04">Crazyflie Drone A1 - UAV Drone</option>
                     <option value="dev-arm-02">Bionic Arm Workstation</option>
                   </select>
+                </div>
+                <div class="form-group" style="margin-top: 0.5rem;">
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer; color: var(--text-primary);">
+                    <input type="checkbox" id="msn_autodispatch" checked>
+                    <span>🚀 Dispatch traversal immediately upon creation</span>
+                  </label>
                 </div>
               </div>
               <div class="modal-ftr">
@@ -4022,12 +4187,14 @@ function renderNexusUi() {
 
     async function handleCreateMission(e) {
       e.preventDefault();
+      const autoDispatch = document.getElementById('msn_autodispatch') ? document.getElementById('msn_autodispatch').checked : false;
       const payload = {
         name: document.getElementById('msn_name').value,
         type: document.getElementById('msn_type').value,
         priority: document.getElementById('msn_priority').value,
         targetWorkstationId: document.getElementById('msn_target').value,
-        robotId: document.getElementById('msn_robot').value || undefined
+        robotId: document.getElementById('msn_robot').value || undefined,
+        autoDispatch: autoDispatch
       };
       const res = await apiFetch('/api/missions', {
         method: 'POST',
@@ -4035,11 +4202,44 @@ function renderNexusUi() {
         body: JSON.stringify(payload)
       });
       if (res && res.success) {
-        showToast('Mission planned: A* path calculated (' + res.data.pathLength + ' steps)');
+        showToast('Mission created: ' + res.data.name + ' (' + res.data.pathLength + ' steps, status: ' + res.data.status + ')');
         closeModal();
         renderCurrentView();
       } else {
         showToast(res?.message || 'Error creating mission', true);
+      }
+    }
+
+    async function handleQuickDispatch(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('quick_msn_name').value,
+        type: 'PAYLOAD_DELIVERY',
+        priority: 'HIGH',
+        targetWorkstationId: document.getElementById('quick_msn_target').value,
+        robotId: document.getElementById('quick_msn_robot').value || undefined,
+        autoDispatch: true
+      };
+      const res = await apiFetch('/api/missions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Mission dispatched: ' + res.data.name + ' (' + res.data.pathLength + ' steps)');
+        renderCurrentView();
+      } else {
+        showToast(res ? res.message : 'Error creating mission', true);
+      }
+    }
+
+    async function relaunchMission(id) {
+      const res = await apiFetch('/api/missions/' + id + '/relaunch', { method: 'POST' });
+      if (res && res.success) {
+        showToast('Mission re-dispatched with fresh trajectory: ' + res.data.id);
+        renderCurrentView();
+      } else {
+        showToast(res ? res.message : 'Error re-dispatching mission', true);
       }
     }
 

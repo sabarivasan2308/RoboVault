@@ -335,6 +335,60 @@
   ],
   "activityLogs": [
     {
+      "id": "act-1792509486043",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-486038-260",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie (Re-run) manually completed",
+      "timestamp": "2026-10-20T15:18:06.043Z"
+    },
+    {
+      "id": "act-1792509486040",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-486038-260",
+      "performedBy": "admin",
+      "details": "Re-dispatched sortie: Autonomous Verification Sortie (Re-run)",
+      "timestamp": "2026-10-20T15:18:06.040Z"
+    },
+    {
+      "id": "act-1792509486036",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-486026-106",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie manually completed",
+      "timestamp": "2026-10-20T15:18:06.036Z"
+    },
+    {
+      "id": "act-1792509486032",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-486026-106",
+      "performedBy": "admin",
+      "details": "Started transit for mission Autonomous Verification Sortie",
+      "timestamp": "2026-10-20T15:18:06.032Z"
+    },
+    {
+      "id": "act-1792509486027",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-486026-106",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Autonomous Verification Sortie assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:18:06.027Z"
+    },
+    {
+      "id": "act-1792508339632",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-2026-002",
+      "performedBy": "admin",
+      "details": "Started transit for mission Perimeter Environmental SLAM Sweep",
+      "timestamp": "2026-10-20T14:58:59.632Z"
+    },
+    {
       "id": "act-1792507468338",
       "action": "MISSION_COMPLETED",
       "entityType": "MISSION",
@@ -547,15 +601,15 @@
       "name": "TurtleBot 4 (Alpha)",
       "assetId": "RB-ROBOT-001",
       "type": "MOBILE_ROBOT",
-      "status": "RUNNING",
-      "battery": 5,
-      "temperature": 141.9,
-      "motorRpm": 125,
-      "runtimeHours": 652.22,
+      "status": "AVAILABLE",
+      "battery": 99,
+      "temperature": 159.3,
+      "motorRpm": 126,
+      "runtimeHours": 654.06,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.101",
-      "mode": "AUTONOMOUS_NAV",
-      "lastPing": "2026-10-20T14:45:59.909Z",
+      "mode": "IDLE_STANDBY",
+      "lastPing": "2026-10-20T15:20:48.923Z",
       "lowBatAlerted": true
     },
     {
@@ -571,7 +625,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.104",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T14:45:59.909Z"
+      "lastPing": "2026-10-20T15:20:48.923Z"
     },
     {
       "id": "dev-prusa-03",
@@ -586,7 +640,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.112",
       "mode": "THERMAL_DIAGNOSTIC",
-      "lastPing": "2026-10-20T14:45:59.909Z"
+      "lastPing": "2026-10-20T15:20:48.923Z"
     },
     {
       "id": "dev-drone-04",
@@ -601,7 +655,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.120",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T14:45:59.909Z"
+      "lastPing": "2026-10-20T15:20:48.923Z"
     }
   ],
   "notifications": [
@@ -612,7 +666,7 @@
       "severity": "HIGH",
       "entityType": "SIMULATOR",
       "entityId": "hazard-1",
-      "read": false,
+      "read": true,
       "timestamp": "2026-10-20T14:01:20.417Z"
     },
     {
@@ -622,7 +676,7 @@
       "severity": "MEDIUM",
       "entityType": "RESERVATION",
       "entityId": "res-1792502657497",
-      "read": false,
+      "read": true,
       "timestamp": "2026-10-20T13:24:17.499Z"
     },
     {
@@ -632,7 +686,7 @@
       "severity": "CRITICAL",
       "entityType": "FAULT",
       "entityId": "flt-2",
-      "read": false,
+      "read": true,
       "timestamp": "2026-10-20T08:16:00Z"
     },
     {
@@ -642,7 +696,7 @@
       "severity": "MEDIUM",
       "entityType": "CHECKOUT",
       "entityId": "chk-3",
-      "read": false,
+      "read": true,
       "timestamp": "2026-10-20T08:02:00Z"
     },
     {
@@ -795,6 +849,208 @@
     ]
   },
   "missions": [
+    {
+      "id": "MSN-486038-260",
+      "name": "Autonomous Verification Sortie (Re-run)",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Re-dispatched sortie based on MSN-486026-106 profile.",
+      "createdAt": "2026-10-20T15:18:06.038Z",
+      "completedAt": "2026-10-20T15:18:06.041Z"
+    },
+    {
+      "id": "MSN-486026-106",
+      "name": "Autonomous Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "TurtleBot 4 (Alpha) selected: Battery level 99.0% (>= 20% safety reserve), MOBILE_ROBOT chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 12 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T15:18:06.026Z",
+      "completedAt": "2026-10-20T15:18:06.035Z"
+    },
     {
       "id": "MSN-468331",
       "name": "Telemetry Verification Sortie",
@@ -1153,8 +1409,8 @@
         3
       ],
       "currentCoords": [
-        0,
-        1
+        5,
+        3
       ],
       "path": [
         [
@@ -1190,15 +1446,16 @@
           3
         ]
       ],
-      "currentStepIndex": 0,
-      "status": "READY",
+      "currentStepIndex": 7,
+      "status": "COMPLETED",
       "priority": "MEDIUM",
       "pathLength": 7,
-      "batteryConsumed": 0,
-      "elapsedSeconds": 0,
+      "batteryConsumed": 2.1,
+      "elapsedSeconds": 32,
       "selectionReason": "TurtleBot 4 onboard 360° laser scanner matched perimeter mapping profile.",
       "createdAt": "2026-10-20T11:15:00Z",
-      "completedAt": null
+      "completedAt": "2026-10-20T14:59:28.774Z",
+      "progressPct": 100
     }
   ]
 }
