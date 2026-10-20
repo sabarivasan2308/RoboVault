@@ -1896,24 +1896,26 @@ function renderNexusUi() {
 
     <nav class="nav-links">
       <div class="nav-section">Mission Control</div>
-      <div class="nav-item active" onclick="switchTab('dashboard')">📊 Mission Command</div>
-      <div class="nav-item" onclick="switchTab('digitalTwin')">🗺️ Digital Twin Studio</div>
-      <div class="nav-item" onclick="switchTab('telemetry')">🤖 Robot Fleet Telemetry</div>
-      <div class="nav-item" onclick="switchTab('predictive')">🔮 Predictive Health</div>
-      <div class="nav-item" onclick="switchTab('scheduling')">📅 Resource Scheduling</div>
+      <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Mission Command</div>
+      <div class="nav-item" data-tab="missions" onclick="switchTab('missions')">🚀 Fleet Mission Simulator</div>
+      <div class="nav-item" data-tab="digitalTwin" onclick="switchTab('digitalTwin')">🗺️ Digital Twin Studio</div>
+      <div class="nav-item" data-tab="telemetry" onclick="switchTab('telemetry')">🤖 Robot Fleet Telemetry</div>
+      <div class="nav-item" data-tab="predictive" onclick="switchTab('predictive')">🔮 Predictive Health</div>
+      <div class="nav-item" data-tab="scheduling" onclick="switchTab('scheduling')">📅 Resource Scheduling</div>
 
       <div class="nav-section">Hardware & Custody</div>
-      <div class="nav-item" onclick="switchTab('assets')">📦 Assets & QR Catalog</div>
-      <div class="nav-item" onclick="switchTab('checkouts')">📋 Equipment Custody</div>
-      <div class="nav-item" onclick="switchTab('maintenance')">🔧 Maintenance Workbench</div>
-      <div class="nav-item" onclick="switchTab('projects')">🚀 Research Projects</div>
-      <div class="nav-item" onclick="switchTab('faults')">⚠️ Fault Reporting</div>
+      <div class="nav-item" data-tab="assets" onclick="switchTab('assets')">📦 Assets & QR Catalog</div>
+      <div class="nav-item" data-tab="checkouts" onclick="switchTab('checkouts')">📋 Equipment Custody</div>
+      <div class="nav-item" data-tab="maintenance" onclick="switchTab('maintenance')">🔧 Maintenance Workbench</div>
+      <div class="nav-item" data-tab="projects" onclick="switchTab('projects')">🚀 Research Projects</div>
+      <div class="nav-item" data-tab="faults" onclick="switchTab('faults')">⚠️ Fault Reporting</div>
 
       <div class="nav-section">Enterprise Intelligence</div>
-      <div class="nav-item" onclick="switchTab('reports')">📑 Reporting & CSV Export</div>
-      <div class="nav-item" onclick="switchTab('users')">👥 User Directory</div>
-      <div class="nav-item" onclick="switchTab('logs')">📜 System Audit Trail</div>
-      <div class="nav-item" onclick="switchTab('health')">🩺 System Observability</div>
+      <div class="nav-item" data-tab="research" onclick="switchTab('research')">🔬 Research Intelligence & What-If</div>
+      <div class="nav-item" data-tab="reports" onclick="switchTab('reports')">📑 Reporting & CSV Export</div>
+      <div class="nav-item" data-tab="users" onclick="switchTab('users')">👥 User Directory</div>
+      <div class="nav-item" data-tab="logs" onclick="switchTab('logs')">📜 System Audit Trail</div>
+      <div class="nav-item" data-tab="health" onclick="switchTab('health')">🩺 System Observability</div>
     </nav>
 
     <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.8rem;">
@@ -1999,8 +2001,14 @@ function renderNexusUi() {
 
     function switchTab(tab) {
       activeTab = tab;
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('active');
+        const dTab = el.getAttribute('data-tab');
+        const oc = el.getAttribute('onclick') || '';
+        if (dTab === tab || oc.includes("'" + tab + "'") || (tab === 'research' && (dTab === 'research' || dTab === 'researchIntelligence'))) {
+          el.classList.add('active');
+        }
+      });
       renderCurrentView();
     }
 
@@ -2023,6 +2031,13 @@ function renderNexusUi() {
     setInterval(updateNotifCount, 8000);
     updateNotifCount();
 
+    // Initial render on page load
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', () => renderCurrentView());
+    } else {
+      renderCurrentView();
+    }
+
     // ---------------- PRIMARY VIEW ROUTER ----------------
     async function renderCurrentView() {
       const container = document.getElementById('appContent');
@@ -2034,7 +2049,7 @@ function renderNexusUi() {
       }
 
       // RESEARCH INTELLIGENCE & WHAT-IF STUDIO
-      if (activeTab === 'researchIntelligence') {
+      if (activeTab === 'researchIntelligence' || activeTab === 'research') {
         return renderResearchIntelligenceView();
       }
 
@@ -2996,7 +3011,7 @@ function renderNexusUi() {
           '<div style="color: var(--primary); font-weight: 700;">🚀 ACTIVE INCOMING FLEET MISSION:</div>' +
           '<div><strong>' + activeMsn.name + '</strong> (' + activeMsn.robotName + ')</div>' +
           '<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Status: ' + activeMsn.status + ' | Progress: ' + (activeMsn.progressPct || 0) + '% (Step ' + activeMsn.currentStepIndex + '/' + activeMsn.pathLength + ')</div>' +
-          '<button class="btn btn-outline" style="margin-top: 0.4rem; padding: 2px 6px; font-size: 0.7rem;" onclick="closeModal(); switchTab(\'missions\');">View in Mission Simulator →</button>' +
+          '<button class="btn btn-outline" style="margin-top: 0.4rem; padding: 2px 6px; font-size: 0.7rem;" onclick="closeModal(); switchTab(&apos;missions&apos;);">View in Mission Simulator →</button>' +
         '</div>';
       }
 
@@ -3668,11 +3683,11 @@ function renderNexusUi() {
           '</div>' +
 
           '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;">' +
-            (!isRunning && !isDone ? '<button class="btn btn-primary" onclick="startMission(\'' + activeMsn.id + '\')">▶️ Start Traversal</button>' : '') +
-            (isRunning ? '<button class="btn btn-outline" onclick="pauseMission(\'' + activeMsn.id + '\')">⏸️ Pause</button>' : '') +
-            (isPaused ? '<button class="btn btn-primary" onclick="resumeMission(\'' + activeMsn.id + '\')">▶️ Resume</button>' : '') +
-            (!isDone ? '<button class="btn btn-danger" onclick="abortMission(\'' + activeMsn.id + '\')">⏹️ Abort</button>' : '') +
-            (!isDone ? '<button class="btn btn-outline" onclick="completeMission(\'' + activeMsn.id + '\')">🏁 Force Complete</button>' : '') +
+            (!isRunning && !isDone ? '<button class="btn btn-primary" onclick="startMission(&apos;' + activeMsn.id + '&apos;)">▶️ Start Traversal</button>' : '') +
+            (isRunning ? '<button class="btn btn-outline" onclick="pauseMission(&apos;' + activeMsn.id + '&apos;)">⏸️ Pause</button>' : '') +
+            (isPaused ? '<button class="btn btn-primary" onclick="resumeMission(&apos;' + activeMsn.id + '&apos;)">▶️ Resume</button>' : '') +
+            (!isDone ? '<button class="btn btn-danger" onclick="abortMission(&apos;' + activeMsn.id + '&apos;)">⏹️ Abort</button>' : '') +
+            (!isDone ? '<button class="btn btn-outline" onclick="completeMission(&apos;' + activeMsn.id + '&apos;)">🏁 Force Complete</button>' : '') +
             (isRunning ? '<button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="injectDynamicObstacle()">🚧 Inject Dynamic Hazard</button>' : '') +
           '</div>' +
         '</div>';

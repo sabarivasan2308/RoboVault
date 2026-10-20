@@ -335,6 +335,33 @@
   ],
   "activityLogs": [
     {
+      "id": "act-1792507049059",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-049052",
+      "performedBy": "admin",
+      "details": "Mission Telemetry Verification Sortie manually completed",
+      "timestamp": "2026-10-20T14:37:29.059Z"
+    },
+    {
+      "id": "act-1792507049056",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-049052",
+      "performedBy": "admin",
+      "details": "Started transit for mission Telemetry Verification Sortie",
+      "timestamp": "2026-10-20T14:37:29.056Z"
+    },
+    {
+      "id": "act-1792507049053",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-049052",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Telemetry Verification Sortie assigned to Crazyflie Swarm Drone A1",
+      "timestamp": "2026-10-20T14:37:29.053Z"
+    },
+    {
       "id": "act-1792505031268",
       "action": "MISSION_COMPLETED",
       "entityType": "MISSION",
@@ -494,14 +521,14 @@
       "assetId": "RB-ROBOT-001",
       "type": "MOBILE_ROBOT",
       "status": "RUNNING",
-      "battery": 5.8,
-      "temperature": 81.9,
-      "motorRpm": 122,
-      "runtimeHours": 646.41,
+      "battery": 5,
+      "temperature": 128.9,
+      "motorRpm": 128,
+      "runtimeHours": 651.14,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.101",
       "mode": "AUTONOMOUS_NAV",
-      "lastPing": "2026-10-20T14:04:58.321Z",
+      "lastPing": "2026-10-20T14:38:13.489Z",
       "lowBatAlerted": true
     },
     {
@@ -517,7 +544,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.104",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T14:04:58.321Z"
+      "lastPing": "2026-10-20T14:38:13.489Z"
     },
     {
       "id": "dev-prusa-03",
@@ -532,7 +559,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.112",
       "mode": "THERMAL_DIAGNOSTIC",
-      "lastPing": "2026-10-20T14:04:58.321Z"
+      "lastPing": "2026-10-20T14:38:13.489Z"
     },
     {
       "id": "dev-drone-04",
@@ -547,7 +574,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.120",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T14:04:58.321Z"
+      "lastPing": "2026-10-20T14:38:13.489Z"
     }
   ],
   "notifications": [
@@ -741,6 +768,59 @@
     ]
   },
   "missions": [
+    {
+      "id": "MSN-049052",
+      "name": "Telemetry Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-drone-04",
+      "robotName": "Crazyflie Swarm Drone A1",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        8,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          8,
+          1
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 4,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 4,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Crazyflie Swarm Drone A1 selected: Battery level 96.9% (>= 20% safety reserve), UAV_DRONE chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 4 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T14:37:29.052Z",
+      "completedAt": "2026-10-20T14:37:29.058Z"
+    },
     {
       "id": "MSN-031261",
       "name": "Telemetry Verification Sortie",

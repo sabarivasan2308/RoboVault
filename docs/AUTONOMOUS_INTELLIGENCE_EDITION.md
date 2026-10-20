@@ -184,3 +184,4 @@ VERIFICATION SUMMARY: 13/13 TEST SUITES PASSED
    - Toggle the **Maintenance Strategy** dropdown between `PREDICTIVE` and `REACTIVE`. Watch the projected annual repair cost, downtime hours, and efficiency index recalculate dynamically.
 7. **Verify Observability & Diagnostics:**
    - Navigate to **"🩺 System Observability"** or query `http://localhost:3000/api/health/system` to verify engine uptime, V8 memory allocation, and document counts.
+
