@@ -413,14 +413,14 @@
       "assetId": "RB-ROBOT-001",
       "type": "MOBILE_ROBOT",
       "status": "RUNNING",
-      "battery": 78.2,
-      "temperature": 45.4,
-      "motorRpm": 115,
-      "runtimeHours": 642.79,
+      "battery": 57.2,
+      "temperature": 59.4,
+      "motorRpm": 119,
+      "runtimeHours": 643.84,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.101",
       "mode": "AUTONOMOUS_NAV",
-      "lastPing": "2026-10-20T13:25:35.831Z"
+      "lastPing": "2026-10-20T13:38:46.206Z"
     },
     {
       "id": "dev-arm-02",
@@ -428,14 +428,14 @@
       "assetId": "RB-MOTOR-027",
       "type": "ARM_MANIPULATOR",
       "status": "RUNNING",
-      "battery": 90.2,
-      "temperature": 40.2,
-      "motorRpm": 111,
-      "runtimeHours": 981.29,
+      "battery": 69.2,
+      "temperature": 46.8,
+      "motorRpm": 100,
+      "runtimeHours": 982.34,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.104",
       "mode": "TRAJECTORY_FOLLOWING",
-      "lastPing": "2026-10-20T13:25:35.831Z"
+      "lastPing": "2026-10-20T13:38:46.206Z"
     },
     {
       "id": "dev-prusa-03",
@@ -450,22 +450,22 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.112",
       "mode": "THERMAL_DIAGNOSTIC",
-      "lastPing": "2026-10-20T13:25:35.831Z"
+      "lastPing": "2026-10-20T13:38:46.206Z"
     },
     {
       "id": "dev-drone-04",
       "name": "Crazyflie Swarm Drone A1",
       "assetId": "RB-ESP32-014",
       "type": "UAV_DRONE",
-      "status": "CHARGING",
-      "battery": 46.5,
+      "status": "AVAILABLE",
+      "battery": 99,
       "temperature": 29.1,
       "motorRpm": 0,
       "runtimeHours": 214.3,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.120",
       "mode": "DOCK_RECHARGE",
-      "lastPing": "2026-10-20T13:25:35.831Z"
+      "lastPing": "2026-10-20T13:38:46.206Z"
     }
   ],
   "notifications": [

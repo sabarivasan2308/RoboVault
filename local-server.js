@@ -689,6 +689,13 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 201, { success: true, message: 'Asset registered successfully', data: newAsset });
     }
 
+    if (pathname.startsWith('/api/assets/') && method === 'GET') {
+      const id = pathname.split('/')[3];
+      const asset = db.assets.find(a => a.id === id || a.assetId === id);
+      if (!asset) return sendJson(res, 404, { success: false, message: 'Asset not found' });
+      return sendJson(res, 200, { success: true, data: asset });
+    }
+
     if (pathname.startsWith('/api/assets/') && method === 'DELETE') {
       const id = pathname.split('/')[3];
       const asset = db.assets.find(a => a.id === id || a.assetId === id);
@@ -2170,10 +2177,518 @@ function renderNexusUi() {
       }
     }
 
-    function toggleNotifications() {
-      apiFetch('/api/notifications/read-all', { method: 'POST' });
+    // ---------------- DIGITAL TWIN INSPECTION ----------------
+    async function inspectTwinNode(nodeId, assetId) {
+      const m = document.getElementById('modalContainer');
+      const assetRes = await apiFetch('/api/assets/' + assetId);
+      const devRes = await apiFetch('/api/telemetry/devices');
+      const asset = (assetRes && assetRes.data) ? assetRes.data : null;
+      const device = (devRes && devRes.data) ? devRes.data.find(d => d.assetId === assetId) : null;
+
+      let deviceHtml = '<div style="font-size: 0.8rem; color: var(--text-muted);">Passive equipment cell — no active telemetry radio attached.</div>';
+      if (device) {
+        deviceHtml = '<div style="background: rgba(6, 182, 212, 0.08); border: 1px solid var(--border-accent); padding: 0.75rem; border-radius: 6px;">' +
+          '<div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.4rem;">LIVE TELEMETRY STREAM:</div>' +
+          '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; text-align: center; font-size: 0.8rem;">' +
+            '<div>Battery: <strong style="color: var(--success)">' + device.battery + '%</strong></div>' +
+            '<div>Temp: <strong style="color: var(--text-primary)">' + device.temperature + '°C</strong></div>' +
+            '<div>Speed: <strong style="color: var(--primary)">' + device.motorRpm + ' RPM</strong></div>' +
+          '</div></div>';
+      }
+
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <div>
+                <span style="font-size: 0.75rem; color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 700;">DIGITAL TWIN NODE: \${nodeId.toUpperCase()}</span>
+                <h3 style="font-size: 1.2rem; margin-top: 2px;">\${asset ? asset.name : assetId}</h3>
+              </div>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.85rem;">
+                <div style="background: var(--bg-card); padding: 0.6rem; border-radius: 6px;">
+                  <div style="font-size: 0.7rem; color: var(--text-muted)">ASSET STATUS</div>
+                  <strong style="color: var(--primary)">\${asset ? asset.status : 'IN_USE'}</strong>
+                </div>
+                <div style="background: var(--bg-card); padding: 0.6rem; border-radius: 6px;">
+                  <div style="font-size: 0.7rem; color: var(--text-muted)">PHYSICAL CONDITION</div>
+                  <strong style="color: var(--success)">\${asset ? asset.condition : 'GOOD'}</strong>
+                </div>
+              </div>
+
+              \${deviceHtml}
+
+              <div style="font-size: 0.82rem; color: var(--text-secondary);">
+                <div><strong>Location:</strong> \${asset ? asset.location : 'Robotics Laboratory'}</div>
+                <div><strong>Runtime Hours:</strong> \${asset ? (asset.runtimeHours || 0) : 0} hrs logged</div>
+                <div><strong>Description:</strong> \${asset ? asset.description : 'Standard robotics hardware platform.'}</div>
+              </div>
+            </div>
+            <div class="modal-ftr">
+              <button class="btn btn-outline" onclick="openCheckoutModal('\${assetId}');">Borrow</button>
+              <button class="btn btn-danger" onclick="closeModal(); openReportFaultModal();">Report Defect</button>
+              <button class="btn btn-primary" onclick="closeModal()">Close</button>
+            </div>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    // ---------------- NOTIFICATIONS MODAL ----------------
+    async function toggleNotifications() {
+      const m = document.getElementById('modalContainer');
+      const res = await apiFetch('/api/notifications');
+      const list = (res && res.data) ? res.data : [];
+      await apiFetch('/api/notifications/read-all', { method: 'POST' });
       document.getElementById('notifBadge').innerText = '0';
-      showToast('Notifications checked & marked read');
+
+      let listHtml = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No operational notifications.</div>';
+      if (list.length > 0) {
+        listHtml = list.map(n => {
+          const color = n.severity === 'CRITICAL' ? 'var(--danger)' : n.severity === 'HIGH' ? 'var(--warning)' : 'var(--primary)';
+          const time = new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return '<div style="padding: 0.65rem 0.85rem; border-radius: 6px; background: var(--bg-card); border-left: 3px solid ' + color + '; margin-bottom: 0.5rem;">' +
+            '<div style="display: flex; justify-content: space-between; font-size: 0.85rem;">' +
+              '<strong>' + n.title + '</strong>' +
+              '<span style="font-size: 0.7rem; color: var(--text-muted); font-family: monospace;">' + time + '</span>' +
+            '</div>' +
+            '<div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">' + n.message + '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" style="max-width: 520px;" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Operational Notifications & Alerts</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.6rem;">
+              \${listHtml}
+            </div>
+            <div class="modal-ftr">
+              <button class="btn btn-primary" onclick="closeModal()">Close</button>
+            </div>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    // ---------------- MODAL BUILDERS & CRUD ----------------
+    function openCreateAssetModal() {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Register New Asset</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <form onsubmit="handleCreateAsset(event)">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Asset ID *</label>
+                  <input type="text" id="m_assetId" required placeholder="e.g. RB-JETSON-001" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Equipment Name *</label>
+                  <input type="text" id="m_name" required placeholder="e.g. NVIDIA Jetson Orin Nano" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Category</label>
+                  <select id="m_category" class="form-control">
+                    <option value="MICROCONTROLLER">Microcontrollers</option>
+                    <option value="DEVELOPMENT_BOARDS">Development Boards</option>
+                    <option value="ROBOTS">Robots</option>
+                    <option value="SENSORS">Sensors</option>
+                    <option value="MOTORS">Motors</option>
+                    <option value="MOTOR_DRIVERS">Motor Drivers</option>
+                    <option value="TEST_EQUIPMENT">Test Equipment</option>
+                    <option value="PRINTERS_3D">3D Printers</option>
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" id="m_qty" value="1" min="1" class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" id="m_loc" placeholder="Rack A1 - Bin 02" class="form-control">
+                  </div>
+                </div>
+              </div>
+              <div class="modal-ftr">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Asset</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    async function handleCreateAsset(e) {
+      e.preventDefault();
+      const payload = {
+        assetId: document.getElementById('m_assetId').value,
+        name: document.getElementById('m_name').value,
+        category: document.getElementById('m_category').value,
+        quantity: Number(document.getElementById('m_qty').value),
+        location: document.getElementById('m_loc').value
+      };
+      const res = await apiFetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Asset registered successfully');
+        closeModal();
+        renderCurrentView();
+      } else {
+        showToast(res?.message || 'Error creating asset', true);
+      }
+    }
+
+    async function deleteAsset(id) {
+      if (!confirm('Are you sure you want to delete this asset record?')) return;
+      const res = await apiFetch('/api/assets/' + id, { method: 'DELETE' });
+      if (res && res.success) {
+        showToast('Asset deleted successfully');
+        renderCurrentView();
+      } else {
+        showToast(res?.message || 'Delete operation failed', true);
+      }
+    }
+
+    function openCheckoutModal(assetId) {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Borrow Equipment</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <form onsubmit="handleCheckout(event, '\${assetId}')">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Asset ID</label>
+                  <input type="text" value="\${assetId}" disabled class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Quantity</label>
+                  <input type="number" id="c_qty" value="1" min="1" max="5" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Research Project / Purpose *</label>
+                  <input type="text" id="c_purpose" placeholder="e.g. Swarm Robotics telemetry test" required class="form-control">
+                </div>
+              </div>
+              <div class="modal-ftr">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    async function handleCheckout(e, assetId) {
+      e.preventDefault();
+      const payload = {
+        assetId,
+        quantity: Number(document.getElementById('c_qty').value),
+        projectName: document.getElementById('c_purpose').value,
+        requesterUsername: currentUsername
+      };
+      const res = await apiFetch('/api/checkouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Checkout request submitted');
+        closeModal();
+        renderCurrentView();
+      } else {
+        showToast(res?.message || 'Checkout failed', true);
+      }
+    }
+
+    async function approveCheckout(id) {
+      const res = await apiFetch('/api/checkouts/' + id + '/approve', { method: 'POST' });
+      if (res && res.success) { showToast('Request approved'); renderCurrentView(); }
+    }
+
+    async function rejectCheckout(id) {
+      const reason = prompt('Please provide mandatory rejection reason:');
+      if (!reason) return;
+      const res = await apiFetch('/api/checkouts/' + id + '/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rejectionReason: reason })
+      });
+      if (res && res.success) { showToast('Request rejected'); renderCurrentView(); }
+    }
+
+    async function issueCheckout(id) {
+      const res = await apiFetch('/api/checkouts/' + id + '/issue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issueCondition: 'GOOD' })
+      });
+      if (res && res.success) { showToast('Equipment handed over to operator'); renderCurrentView(); }
+    }
+
+    async function returnCheckout(id) {
+      const cond = prompt('Enter physical condition upon return (GOOD, FAIR, POOR, DAMAGED):', 'GOOD');
+      if (!cond) return;
+      const res = await apiFetch('/api/checkouts/' + id + '/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnCondition: cond.toUpperCase() })
+      });
+      if (res && res.success) { showToast('Return verified and condition audited'); renderCurrentView(); }
+    }
+
+    function openNewTicketModal(prefillAssetId, prefillIssue) {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Open Maintenance Work Order</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <form onsubmit="handleCreateTicket(event)">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Asset ID *</label>
+                  <input type="text" id="t_assetId" value="\${prefillAssetId || ''}" required placeholder="e.g. RB-ROBOT-001" class="form-control">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select id="t_priority" class="form-control">
+                      <option value="HIGH">High Priority</option>
+                      <option value="MEDIUM" selected>Medium Priority</option>
+                      <option value="CRITICAL">Critical Failure</option>
+                      <option value="LOW">Routine / Low</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Root Cause Hypothesis</label>
+                    <select id="t_rootCause" class="form-control">
+                      <option value="MECHANICAL_WEAR">Mechanical Wear</option>
+                      <option value="THERMAL_STRESS">Thermal Stress</option>
+                      <option value="ELECTRICAL_SHORT">Electrical Short</option>
+                      <option value="FIRMWARE_BUG">Firmware Anomaly</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Issue Description *</label>
+                  <textarea id="t_desc" required rows="3" class="form-control" placeholder="Symptoms, observed failure mode, and test results...">\${prefillIssue || ''}</textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Assigned Technician</label>
+                  <input type="text" id="t_tech" value="Alex Rivera" class="form-control">
+                </div>
+              </div>
+              <div class="modal-ftr">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Dispatch Work Order</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    async function handleCreateTicket(e) {
+      e.preventDefault();
+      const payload = {
+        assetId: document.getElementById('t_assetId').value,
+        priority: document.getElementById('t_priority').value,
+        rootCause: document.getElementById('t_rootCause').value,
+        issueDescription: document.getElementById('t_desc').value,
+        assignedTechnician: document.getElementById('t_tech').value
+      };
+      const res = await apiFetch('/api/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Work order registered');
+        closeModal();
+        renderCurrentView();
+      } else {
+        showToast(res?.message || 'Error opening ticket', true);
+      }
+    }
+
+    async function resolveTicket(id) {
+      const costStr = prompt('Enter incurred repair and replacement parts cost ($):', '15.00');
+      if (costStr === null) return;
+      const res = await apiFetch('/api/maintenance/' + id + '/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionsTaken: 'Replaced worn parts & recalibrated', cost: Number(costStr) || 15.0 })
+      });
+      if (res && res.success) { showToast('Maintenance order resolved and asset restored to AVAILABLE'); renderCurrentView(); }
+    }
+
+    function logMaintenanceFromRisk(assetId, action) {
+      openNewTicketModal(assetId, 'Predictive Risk Action: ' + action);
+    }
+
+    function openNewProjectModal() {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Register Research Project</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <form onsubmit="handleCreateProject(event)">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Project Code *</label>
+                  <input type="text" id="p_code" required placeholder="e.g. PRJ-AUTONOMOUS-01" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Project Title *</label>
+                  <input type="text" id="p_name" required placeholder="e.g. Visual SLAM Drone Navigation" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Project Mission / Description</label>
+                  <textarea id="p_desc" rows="2" class="form-control" placeholder="Scope and hardware requirements..."></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Lead Faculty</label>
+                    <input type="text" id="p_lead" placeholder="Prof. David Chen" class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <input type="text" id="p_dept" value="Robotics Engineering" class="form-control">
+                  </div>
+                </div>
+              </div>
+              <div class="modal-ftr">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Register Project</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    async function handleCreateProject(e) {
+      e.preventDefault();
+      const payload = {
+        code: document.getElementById('p_code').value,
+        name: document.getElementById('p_name').value,
+        description: document.getElementById('p_desc').value,
+        leadFaculty: document.getElementById('p_lead').value,
+        department: document.getElementById('p_dept').value
+      };
+      const res = await apiFetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Project registered');
+        closeModal();
+        renderCurrentView();
+      } else {
+        showToast(res?.message || 'Error creating project', true);
+      }
+    }
+
+    function openReportFaultModal() {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Report Defective Hardware</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <form onsubmit="handleCreateFault(event)">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Affected Asset ID *</label>
+                  <input type="text" id="f_assetId" required placeholder="e.g. RB-ROBOT-001" class="form-control">
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Fault Title *</label>
+                    <input type="text" id="f_title" required placeholder="e.g. Motor stall at 90 deg" class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Severity</label>
+                    <select id="f_severity" class="form-control">
+                      <option value="CRITICAL">Critical</option>
+                      <option value="HIGH" selected>High</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="LOW">Low</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Symptoms & Error Behavior *</label>
+                  <textarea id="f_symptoms" required rows="3" class="form-control" placeholder="Describe strange noises, smoke, thermal throttling, or packet drop..."></textarea>
+                </div>
+              </div>
+              <div class="modal-ftr">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-danger">Submit Defect Report</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    async function handleCreateFault(e) {
+      e.preventDefault();
+      const payload = {
+        assetId: document.getElementById('f_assetId').value,
+        title: document.getElementById('f_title').value,
+        severity: document.getElementById('f_severity').value,
+        symptoms: document.getElementById('f_symptoms').value,
+        reportedBy: currentUsername
+      };
+      const res = await apiFetch('/api/faults', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Fault reported. Lab staff alerted.');
+        closeModal();
+        renderCurrentView();
+      } else {
+        showToast(res?.message || 'Error submitting fault', true);
+      }
     }
 
     function closeModal() {
@@ -2183,8 +2698,12 @@ function renderNexusUi() {
       if (e.target.classList.contains('modal-overlay')) closeModal();
     }
 
-    // Initialize
-    renderCurrentView();
+    function filterAssetsTable() {
+      const term = (document.getElementById('assetSearch').value || '').toLowerCase();
+      document.querySelectorAll('#assetTable tbody tr').forEach(tr => {
+        tr.style.display = tr.innerText.toLowerCase().includes(term) ? '' : 'none';
+      });
+    }
   </script>
 </body>
 </html>`;
