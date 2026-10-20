@@ -1,0 +1,262 @@
+{
+  "info": {
+    "name": "RoboVault REST API Collection",
+    "description": "Comprehensive API collection for RoboVault Robotics Lab Asset & Maintenance Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Summary Telemetry",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "Get All Assets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets"
+          }
+        },
+        {
+          "name": "Search Assets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/assets/search?query=ESP32&category=DEVELOPMENT_BOARDS",
+              "host": ["{{baseUrl}}"],
+              "path": ["assets", "search"],
+              "query": [
+                { "key": "query", "value": "ESP32" },
+                { "key": "category", "value": "DEVELOPMENT_BOARDS" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Asset",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"RB-JETSON-001\",\n  \"name\": \"NVIDIA Jetson Nano Developer Kit\",\n  \"category\": \"DEVELOPMENT_BOARDS\",\n  \"brand\": \"NVIDIA\",\n  \"model\": \"Jetson Nano B01\",\n  \"serialNumber\": \"NV-JET-00129\",\n  \"quantity\": 2,\n  \"location\": \"Robotics Lab - Rack A2\",\n  \"status\": \"AVAILABLE\",\n  \"condition\": \"GOOD\",\n  \"description\": \"Quad-core ARM Cortex-A57 with 128-core Maxwell GPU for edge AI\"\n}"
+            },
+            "url": "{{baseUrl}}/assets"
+          }
+        },
+        {
+          "name": "Get Asset by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/1"
+          }
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"NVIDIA Jetson Nano 4GB\",\n  \"category\": \"DEVELOPMENT_BOARDS\",\n  \"location\": \"Robotics Lab - Rack A3\",\n  \"status\": \"AVAILABLE\",\n  \"quantity\": 2\n}"
+            },
+            "url": "{{baseUrl}}/assets/1"
+          }
+        },
+        {
+          "name": "Delete Asset",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/assets/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Checkouts",
+      "item": [
+        {
+          "name": "Get All Checkouts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/checkouts"
+          }
+        },
+        {
+          "name": "Request Checkout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"RB-ESP32-014\",\n  \"userName\": \"John Doe\",\n  \"userEmail\": \"jdoe@student.edu\",\n  \"projectName\": \"Autonomous Delivery Robot\",\n  \"purpose\": \"WiFi telemetry prototyping\",\n  \"expectedReturnDate\": \"2026-11-15\"\n}"
+            },
+            "url": "{{baseUrl}}/checkouts"
+          }
+        },
+        {
+          "name": "Approve Checkout",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approvedBy\": \"Dr. Sarah Chen\"\n}"
+            },
+            "url": "{{baseUrl}}/checkouts/chk-1/approve"
+          }
+        },
+        {
+          "name": "Issue Equipment",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"issuedBy\": \"Alex Rivera\"\n}"
+            },
+            "url": "{{baseUrl}}/checkouts/chk-1/issue"
+          }
+        },
+        {
+          "name": "Return Equipment",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnCondition\": \"GOOD\",\n  \"remarks\": \"Returned with all headers and cables\"\n}"
+            },
+            "url": "{{baseUrl}}/checkouts/chk-1/return"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maintenance",
+      "item": [
+        {
+          "name": "Get All Maintenance Records",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenance"
+          }
+        },
+        {
+          "name": "Log Maintenance",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"RB-OSC-003\",\n  \"issueDescription\": \"Screen flickering on high sample rates\",\n  \"technicianName\": \"Alex Rivera\",\n  \"cost\": 25.0\n}"
+            },
+            "url": "{{baseUrl}}/maintenance"
+          }
+        },
+        {
+          "name": "Update Maintenance Ticket",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RESOLVED\",\n  \"diagnosis\": \"Loose ribbon cable to LCD controller\",\n  \"actionTaken\": \"Reseated display FFC connector with kapton tape\",\n  \"cost\": 0.0,\n  \"technicianName\": \"Alex Rivera\"\n}"
+            },
+            "url": "{{baseUrl}}/maintenance/m-1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PRJ-ROBO-03\",\n  \"name\": \"Bipedal Walking Robot\",\n  \"description\": \"12-DOF bipedal robot with inverse kinematics control\",\n  \"projectLead\": \"David Park\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "Allocate Asset to Project",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/projects/prj-1/allocate/RB-ESP32-014"
+          }
+        },
+        {
+          "name": "Deallocate Asset from Project",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/projects/prj-1/allocate/RB-ESP32-014"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fault Reports",
+      "item": [
+        {
+          "name": "Get All Faults",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/faults"
+          }
+        },
+        {
+          "name": "File Fault Report",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"RB-PWR-007\",\n  \"reportedBy\": \"Maya Lin\",\n  \"title\": \"LiPo cell puffed up during recharge cycle\",\n  \"description\": \"Charger showed cell 1 mismatch. Placed in fire-safe bag.\",\n  \"severity\": \"CRITICAL\"\n}"
+            },
+            "url": "{{baseUrl}}/faults"
+          }
+        },
+        {
+          "name": "Convert Fault to Maintenance",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"technicianName\": \"Alex Rivera\"\n}"
+            },
+            "url": "{{baseUrl}}/faults/flt-1/send-to-maintenance"
+          }
+        }
+      ]
+    }
+  ]
+}
