@@ -18,39 +18,34 @@ if ($gitCmd) {
     }
 }
 
-Write-Host "[✓] Using Git: $git" -ForegroundColor Green
+Write-Host "[✓] Git binary detected: $git" -ForegroundColor Green
 
-# 2. Check current status
 Set-Location -Path $PSScriptRoot
-& $git status
 
-# 3. Prompt for GitHub repository URL
-Write-Host "`nPlease enter your GitHub Repository URL" -ForegroundColor Yellow
-Write-Host "Example: https://github.com/YOUR_USERNAME/RoboVault.git" -ForegroundColor DarkGray
-$repoUrl = Read-Host "GitHub Repository URL"
-
-if ([string]::IsNullOrWhiteSpace($repoUrl)) {
-    Write-Host "Repository URL cannot be empty. Aborted." -ForegroundColor Red
-    Exit 1
+# 2. Check remote origin
+$origin = & $git remote get-url origin 2>$null
+if (-not $origin) {
+    $origin = "https://github.com/sabarivasan2308/RoboVault.git"
+    & $git remote add origin $origin
 }
 
-# 4. Configure remote
-$existingRemote = & $git remote get-url origin 2>$null
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Updating existing origin to $repoUrl..." -ForegroundColor Cyan
-    & $git remote set-url origin $repoUrl
-} else {
-    Write-Host "Adding remote origin $repoUrl..." -ForegroundColor Cyan
-    & $git remote add origin $repoUrl
-}
+Write-Host "[✓] Target Remote: $origin" -ForegroundColor Cyan
 
-# 5. Push to main branch
-Write-Host "`nPushing main branch to GitHub..." -ForegroundColor Cyan
+# 3. Push to main branch
+Write-Host "`nAttempting git push to origin main..." -ForegroundColor Yellow
 & $git push -u origin main
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "`n[✓] Successfully pushed RoboVault to GitHub!" -ForegroundColor Green
-    Write-Host "Repository URL: $repoUrl" -ForegroundColor Cyan
+    Write-Host "`n==================================================" -ForegroundColor Green
+    Write-Host " [✓] SUCCESS: RoboVault pushed to GitHub!         " -ForegroundColor Green
+    Write-Host " View at: $origin                                 " -ForegroundColor Cyan
+    Write-Host "==================================================" -ForegroundColor Green
 } else {
-    Write-Host "`n[!] Push failed. Please verify repository permissions or authentication." -ForegroundColor Red
+    Write-Host "`n==================================================" -ForegroundColor Yellow
+    Write-Host " [!] NOTICE: Repository not yet created on GitHub." -ForegroundColor Yellow
+    Write-Host " 1. Click this link to create the repo:           " -ForegroundColor White
+    Write-Host "    https://github.com/new?name=RoboVault        " -ForegroundColor Cyan
+    Write-Host " 2. Click 'Create repository' (leave all unchecked)" -ForegroundColor White
+    Write-Host " 3. Run this script again to complete the push!   " -ForegroundColor Green
+    Write-Host "==================================================" -ForegroundColor Yellow
 }
