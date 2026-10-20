@@ -257,6 +257,62 @@ async function runVerification() {
         }
         throw new Error(`Sensor evaluation failed`);
       }
+    },
+    {
+      name: '14. Dynamic Obstacle Avoidance & Invariant Safety Lifecycle',
+      run: async () => {
+        // 1. Reset obstacles
+        const clear1 = await apiPost('/api/missions/clear-obstacles', {});
+        if (clear1.status !== 200) throw new Error('Clear obstacles failed');
+
+        // 2. Dispatch mission
+        const createRes = await apiPost('/api/missions', {
+          name: 'Obstacle Avoidance Lifecycle Test',
+          type: 'PAYLOAD_DELIVERY',
+          robotId: 'dev-tb4-01',
+          targetWorkstationId: 'ws-1',
+          autoDispatch: true
+        });
+        if (createRes.status !== 201) throw new Error('Failed to create test mission');
+        const msn = createRes.data.data;
+        const hazardCoord = msn.path[2] || [0, 3];
+
+        // 3. Inject hazard on upcoming trajectory
+        const injectRes = await apiPost('/api/missions/inject-obstacle', { coord: hazardCoord });
+        if (injectRes.status !== 200) throw new Error('Failed to inject hazard');
+
+        // 4. Verify replanned path avoids hazard
+        const msnListRes = await apiGet('/api/missions');
+        const updatedMsn = (msnListRes.data.data || []).find(m => m.id === msn.id);
+        const remainingHasHazard = updatedMsn.path.slice(updatedMsn.currentStepIndex + 1).some(p => p[0] === hazardCoord[0] && p[1] === hazardCoord[1]);
+        if (remainingHasHazard) throw new Error('Dynamic A* path failed to avoid injected hazard');
+
+        // 5. Test safe emergency halt when destination is completely blocked
+        await apiPost('/api/missions/inject-obstacle', { coord: [1, 3] });
+        await apiPost('/api/missions/inject-obstacle', { coord: [3, 3] });
+        const wallRes = await apiPost('/api/missions/inject-obstacle', { coord: [2, 4] });
+        if (wallRes.status !== 200) throw new Error('Failed to inject wall obstacles');
+
+        const blockedListRes = await apiGet('/api/missions');
+        const blockedMsn = (blockedListRes.data.data || []).find(m => m.id === msn.id);
+        if (blockedMsn.status !== 'BLOCKED') {
+          throw new Error(`Expected mission status BLOCKED under complete blockage, got ${blockedMsn.status}`);
+        }
+
+        // 6. Clear obstacles and verify auto-resumption
+        const clear2 = await apiPost('/api/missions/clear-obstacles', {});
+        if (clear2.status !== 200) throw new Error('Second clear obstacles failed');
+
+        const resumedListRes = await apiGet('/api/missions');
+        const resumedMsn = (resumedListRes.data.data || []).find(m => m.id === msn.id);
+        if (resumedMsn.status !== 'IN_TRANSIT') {
+          throw new Error(`Expected mission status IN_TRANSIT after obstacle clear, got ${resumedMsn.status}`);
+        }
+
+        // Clean up
+        await apiPost(`/api/missions/${msn.id}/complete`, {});
+        return `PASS: Dynamic hazard reroute -> Dead-end emergency safety halt (BLOCKED) -> Auto-resume on obstacle clear verified.`;
+      }
     }
   ];
 

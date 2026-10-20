@@ -335,6 +335,465 @@
   ],
   "activityLogs": [
     {
+      "id": "act-1792511171022",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170969-811",
+      "performedBy": "admin",
+      "details": "Mission Obstacle Avoidance Lifecycle Test manually completed",
+      "timestamp": "2026-10-20T15:46:11.022Z"
+    },
+    {
+      "id": "act-1792511171014",
+      "action": "OBSTACLES_CLEARED",
+      "entityType": "SIMULATOR",
+      "entityId": "all",
+      "performedBy": "admin",
+      "details": "Cleared 4 dynamic hazards. Unblocked 1 missions.",
+      "timestamp": "2026-10-20T15:46:11.014Z"
+    },
+    {
+      "id": "act-1792511171002",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "2,4",
+      "performedBy": "admin",
+      "details": "Hazard placed at (2, 4). Target obstructed — Safety halt engaged (Zero collision).",
+      "timestamp": "2026-10-20T15:46:11.002Z"
+    },
+    {
+      "id": "act-1792511170995",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "3,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (3, 3). Dynamic A* path recalculated with 14 remaining steps.",
+      "timestamp": "2026-10-20T15:46:10.995Z"
+    },
+    {
+      "id": "act-1792511170987",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "timestamp": "2026-10-20T15:46:10.987Z"
+    },
+    {
+      "id": "act-1792511170978",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "0,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (0, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "timestamp": "2026-10-20T15:46:10.978Z"
+    },
+    {
+      "id": "act-1792511170972",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170969-811",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Obstacle Avoidance Lifecycle Test assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:46:10.972Z"
+    },
+    {
+      "id": "act-1792511170964",
+      "action": "OBSTACLES_CLEARED",
+      "entityType": "SIMULATOR",
+      "entityId": "all",
+      "performedBy": "admin",
+      "details": "Cleared 0 dynamic hazards. Unblocked 0 missions.",
+      "timestamp": "2026-10-20T15:46:10.964Z"
+    },
+    {
+      "id": "act-1792511170952",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170945-800",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie (Re-run) manually completed",
+      "timestamp": "2026-10-20T15:46:10.952Z"
+    },
+    {
+      "id": "act-1792511170947",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170945-800",
+      "performedBy": "admin",
+      "details": "Re-dispatched sortie: Autonomous Verification Sortie (Re-run)",
+      "timestamp": "2026-10-20T15:46:10.947Z"
+    },
+    {
+      "id": "act-1792511170942",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170925-853",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie manually completed",
+      "timestamp": "2026-10-20T15:46:10.942Z"
+    },
+    {
+      "id": "act-1792511170935",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170925-853",
+      "performedBy": "admin",
+      "details": "Started transit for mission Autonomous Verification Sortie",
+      "timestamp": "2026-10-20T15:46:10.935Z"
+    },
+    {
+      "id": "act-1792511170928",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-170925-853",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Autonomous Verification Sortie assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:46:10.928Z"
+    },
+    {
+      "id": "act-1792511110245",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110195-479",
+      "performedBy": "admin",
+      "details": "Mission Obstacle Avoidance Lifecycle Test manually completed",
+      "timestamp": "2026-10-20T15:45:10.245Z"
+    },
+    {
+      "id": "act-1792511110236",
+      "action": "OBSTACLES_CLEARED",
+      "entityType": "SIMULATOR",
+      "entityId": "all",
+      "performedBy": "admin",
+      "details": "Cleared 4 dynamic hazards. Unblocked 1 missions.",
+      "timestamp": "2026-10-20T15:45:10.236Z"
+    },
+    {
+      "id": "act-1792511110225",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "2,4",
+      "performedBy": "admin",
+      "details": "Hazard placed at (2, 4). Target obstructed — Safety halt engaged (Zero collision).",
+      "timestamp": "2026-10-20T15:45:10.225Z"
+    },
+    {
+      "id": "act-1792511110217",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "3,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (3, 3). Dynamic A* path recalculated with 14 remaining steps.",
+      "timestamp": "2026-10-20T15:45:10.217Z"
+    },
+    {
+      "id": "act-1792511110210",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "timestamp": "2026-10-20T15:45:10.210Z"
+    },
+    {
+      "id": "act-1792511110201",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "0,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (0, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "timestamp": "2026-10-20T15:45:10.201Z"
+    },
+    {
+      "id": "act-1792511110196",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110195-479",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Obstacle Avoidance Lifecycle Test assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:45:10.196Z"
+    },
+    {
+      "id": "act-1792511110189",
+      "action": "OBSTACLES_CLEARED",
+      "entityType": "SIMULATOR",
+      "entityId": "all",
+      "performedBy": "admin",
+      "details": "Cleared 0 dynamic hazards. Unblocked 0 missions.",
+      "timestamp": "2026-10-20T15:45:10.189Z"
+    },
+    {
+      "id": "act-1792511110178",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110172-361",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie (Re-run) manually completed",
+      "timestamp": "2026-10-20T15:45:10.178Z"
+    },
+    {
+      "id": "act-1792511110173",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110172-361",
+      "performedBy": "admin",
+      "details": "Re-dispatched sortie: Autonomous Verification Sortie (Re-run)",
+      "timestamp": "2026-10-20T15:45:10.173Z"
+    },
+    {
+      "id": "act-1792511110169",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110156-703",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie manually completed",
+      "timestamp": "2026-10-20T15:45:10.169Z"
+    },
+    {
+      "id": "act-1792511110164",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110156-703",
+      "performedBy": "admin",
+      "details": "Started transit for mission Autonomous Verification Sortie",
+      "timestamp": "2026-10-20T15:45:10.164Z"
+    },
+    {
+      "id": "act-1792511110158",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-110156-703",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Autonomous Verification Sortie assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:45:10.158Z"
+    },
+    {
+      "id": "act-1792511084571",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-084531-149",
+      "performedBy": "admin",
+      "details": "Mission Dynamic Pathfinding Verification Sortie manually completed",
+      "timestamp": "2026-10-20T15:44:44.571Z"
+    },
+    {
+      "id": "act-1792511084563",
+      "action": "OBSTACLES_CLEARED",
+      "entityType": "SIMULATOR",
+      "entityId": "all",
+      "performedBy": "admin",
+      "details": "Cleared 4 dynamic hazards. Unblocked 1 missions.",
+      "timestamp": "2026-10-20T15:44:44.563Z"
+    },
+    {
+      "id": "act-1792511084554",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "2,4",
+      "performedBy": "admin",
+      "details": "Hazard placed at (2, 4). Target obstructed — Safety halt engaged (Zero collision).",
+      "timestamp": "2026-10-20T15:44:44.554Z"
+    },
+    {
+      "id": "act-1792511084548",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "3,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (3, 3). Dynamic A* path recalculated with 14 remaining steps.",
+      "timestamp": "2026-10-20T15:44:44.548Z"
+    },
+    {
+      "id": "act-1792511084543",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "timestamp": "2026-10-20T15:44:44.543Z"
+    },
+    {
+      "id": "act-1792511084536",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "0,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (0, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "timestamp": "2026-10-20T15:44:44.536Z"
+    },
+    {
+      "id": "act-1792511084532",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-084531-149",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Dynamic Pathfinding Verification Sortie assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:44:44.532Z"
+    },
+    {
+      "id": "act-1792511084521",
+      "action": "OBSTACLES_CLEARED",
+      "entityType": "SIMULATOR",
+      "entityId": "all",
+      "performedBy": "admin",
+      "details": "Cleared 0 dynamic hazards. Unblocked 0 missions.",
+      "timestamp": "2026-10-20T15:44:44.521Z"
+    },
+    {
+      "id": "act-1792509825022",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,0",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "timestamp": "2026-10-20T15:23:45.022Z"
+    },
+    {
+      "id": "act-1792509824288",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,0",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "timestamp": "2026-10-20T15:23:44.288Z"
+    },
+    {
+      "id": "act-1792509823554",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,0",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "timestamp": "2026-10-20T15:23:43.554Z"
+    },
+    {
+      "id": "act-1792509822913",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,0",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "timestamp": "2026-10-20T15:23:42.913Z"
+    },
+    {
+      "id": "act-1792509822007",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,0",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "timestamp": "2026-10-20T15:23:42.007Z"
+    },
+    {
+      "id": "act-1792509821255",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "0,0",
+      "performedBy": "admin",
+      "details": "Hazard placed at (0, 0). Warning: target currently unreachable.",
+      "timestamp": "2026-10-20T15:23:41.255Z"
+    },
+    {
+      "id": "act-1792509820255",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,1",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 1). Dynamic A* path recalculated with 11 remaining steps.",
+      "timestamp": "2026-10-20T15:23:40.255Z"
+    },
+    {
+      "id": "act-1792509818674",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "0,4",
+      "performedBy": "admin",
+      "details": "Hazard placed at (0, 4). Dynamic A* path recalculated with 9 remaining steps.",
+      "timestamp": "2026-10-20T15:23:38.674Z"
+    },
+    {
+      "id": "act-1792509813742",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-813741-196",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Autonomous Sortie #705 assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:23:33.742Z"
+    },
+    {
+      "id": "act-1792509810657",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "3,2",
+      "performedBy": "admin",
+      "details": "Dynamic hazard placed at (3, 2).",
+      "timestamp": "2026-10-20T15:23:30.657Z"
+    },
+    {
+      "id": "act-1792509780612",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "1,3",
+      "performedBy": "admin",
+      "details": "Hazard placed at (1, 3). Dynamic A* path recalculated with 4 remaining steps.",
+      "timestamp": "2026-10-20T15:23:00.612Z"
+    },
+    {
+      "id": "act-1792509772512",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-772509-313",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Autonomous Sortie #722 assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:22:52.512Z"
+    },
+    {
+      "id": "act-1792509679463",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-679458-363",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie (Re-run) manually completed",
+      "timestamp": "2026-10-20T15:21:19.463Z"
+    },
+    {
+      "id": "act-1792509679460",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-679458-363",
+      "performedBy": "admin",
+      "details": "Re-dispatched sortie: Autonomous Verification Sortie (Re-run)",
+      "timestamp": "2026-10-20T15:21:19.460Z"
+    },
+    {
+      "id": "act-1792509679456",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-679445-555",
+      "performedBy": "admin",
+      "details": "Mission Autonomous Verification Sortie manually completed",
+      "timestamp": "2026-10-20T15:21:19.456Z"
+    },
+    {
+      "id": "act-1792509679451",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-679445-555",
+      "performedBy": "admin",
+      "details": "Started transit for mission Autonomous Verification Sortie",
+      "timestamp": "2026-10-20T15:21:19.451Z"
+    },
+    {
+      "id": "act-1792509679446",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-679445-555",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Autonomous Verification Sortie assigned to TurtleBot 4 (Alpha)",
+      "timestamp": "2026-10-20T15:21:19.446Z"
+    },
+    {
       "id": "act-1792509486043",
       "action": "MISSION_COMPLETED",
       "entityType": "MISSION",
@@ -602,14 +1061,14 @@
       "assetId": "RB-ROBOT-001",
       "type": "MOBILE_ROBOT",
       "status": "AVAILABLE",
-      "battery": 99,
+      "battery": 93.6,
       "temperature": 159.3,
       "motorRpm": 126,
       "runtimeHours": 654.06,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.101",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T15:20:48.923Z",
+      "lastPing": "2026-10-20T15:49:23.570Z",
       "lowBatAlerted": true
     },
     {
@@ -625,7 +1084,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.104",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T15:20:48.923Z"
+      "lastPing": "2026-10-20T15:49:23.570Z"
     },
     {
       "id": "dev-prusa-03",
@@ -640,7 +1099,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.112",
       "mode": "THERMAL_DIAGNOSTIC",
-      "lastPing": "2026-10-20T15:20:48.923Z"
+      "lastPing": "2026-10-20T15:49:23.570Z"
     },
     {
       "id": "dev-drone-04",
@@ -655,10 +1114,290 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.120",
       "mode": "IDLE_STANDBY",
-      "lastPing": "2026-10-20T15:20:48.923Z"
+      "lastPing": "2026-10-20T15:49:23.570Z"
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1792511171016",
+      "title": "Dynamic Hazards Cleared",
+      "message": "Removed 4 active hazards from navigation grid.",
+      "severity": "INFO",
+      "entityType": "SIMULATOR",
+      "entityId": "clear-obs",
+      "read": false,
+      "timestamp": "2026-10-20T15:46:11.016Z"
+    },
+    {
+      "id": "notif-1792511171005",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (2, 4). Target obstructed — Safety halt engaged (Zero collision).",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:46:11.005Z"
+    },
+    {
+      "id": "notif-1792511170997",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (3, 3). Dynamic A* path recalculated with 14 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:46:10.997Z"
+    },
+    {
+      "id": "notif-1792511170989",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:46:10.989Z"
+    },
+    {
+      "id": "notif-1792511170980",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (0, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:46:10.980Z"
+    },
+    {
+      "id": "notif-1792511170966",
+      "title": "Dynamic Hazards Cleared",
+      "message": "Removed 0 active hazards from navigation grid.",
+      "severity": "INFO",
+      "entityType": "SIMULATOR",
+      "entityId": "clear-obs",
+      "read": false,
+      "timestamp": "2026-10-20T15:46:10.966Z"
+    },
+    {
+      "id": "notif-1792511110238",
+      "title": "Dynamic Hazards Cleared",
+      "message": "Removed 4 active hazards from navigation grid.",
+      "severity": "INFO",
+      "entityType": "SIMULATOR",
+      "entityId": "clear-obs",
+      "read": false,
+      "timestamp": "2026-10-20T15:45:10.238Z"
+    },
+    {
+      "id": "notif-1792511110227",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (2, 4). Target obstructed — Safety halt engaged (Zero collision).",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:45:10.227Z"
+    },
+    {
+      "id": "notif-1792511110219",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (3, 3). Dynamic A* path recalculated with 14 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:45:10.219Z"
+    },
+    {
+      "id": "notif-1792511110212",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:45:10.212Z"
+    },
+    {
+      "id": "notif-1792511110203",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (0, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:45:10.203Z"
+    },
+    {
+      "id": "notif-1792511110190",
+      "title": "Dynamic Hazards Cleared",
+      "message": "Removed 0 active hazards from navigation grid.",
+      "severity": "INFO",
+      "entityType": "SIMULATOR",
+      "entityId": "clear-obs",
+      "read": false,
+      "timestamp": "2026-10-20T15:45:10.190Z"
+    },
+    {
+      "id": "notif-1792511084565",
+      "title": "Dynamic Hazards Cleared",
+      "message": "Removed 4 active hazards from navigation grid.",
+      "severity": "INFO",
+      "entityType": "SIMULATOR",
+      "entityId": "clear-obs",
+      "read": false,
+      "timestamp": "2026-10-20T15:44:44.565Z"
+    },
+    {
+      "id": "notif-1792511084555",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (2, 4). Target obstructed — Safety halt engaged (Zero collision).",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:44:44.555Z"
+    },
+    {
+      "id": "notif-1792511084550",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (3, 3). Dynamic A* path recalculated with 14 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:44:44.550Z"
+    },
+    {
+      "id": "notif-1792511084544",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:44:44.544Z"
+    },
+    {
+      "id": "notif-1792511084537",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (0, 3). Dynamic A* path recalculated with 6 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:44:44.537Z"
+    },
+    {
+      "id": "notif-1792511084522",
+      "title": "Dynamic Hazards Cleared",
+      "message": "Removed 0 active hazards from navigation grid.",
+      "severity": "INFO",
+      "entityType": "SIMULATOR",
+      "entityId": "clear-obs",
+      "read": false,
+      "timestamp": "2026-10-20T15:44:44.522Z"
+    },
+    {
+      "id": "notif-1792509825025",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:45.025Z"
+    },
+    {
+      "id": "notif-1792509824290",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:44.290Z"
+    },
+    {
+      "id": "notif-1792509823556",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:43.556Z"
+    },
+    {
+      "id": "notif-1792509822915",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:42.915Z"
+    },
+    {
+      "id": "notif-1792509822009",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 0). Warning: target currently unreachable.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:42.009Z"
+    },
+    {
+      "id": "notif-1792509821258",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (0, 0). Warning: target currently unreachable.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:41.258Z"
+    },
+    {
+      "id": "notif-1792509820257",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 1). Dynamic A* path recalculated with 11 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:40.257Z"
+    },
+    {
+      "id": "notif-1792509818677",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (0, 4). Dynamic A* path recalculated with 9 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:38.677Z"
+    },
+    {
+      "id": "notif-1792509810659",
+      "title": "Simulated Hazard Injected",
+      "message": "Dynamic hazard placed at (3, 2).",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:30.659Z"
+    },
+    {
+      "id": "notif-1792509780613",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (1, 3). Dynamic A* path recalculated with 4 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T15:23:00.613Z"
+    },
     {
       "id": "notif-1792504880417",
       "title": "Simulated Hazard Injected",
@@ -759,7 +1498,7 @@
         "height": 90,
         "assetId": "RB-ROBOT-001",
         "assetName": "TurtleBot 4 Mobile Base",
-        "status": "IN_USE",
+        "status": "AVAILABLE",
         "operator": "Maya Patel"
       },
       {
@@ -849,6 +1588,922 @@
     ]
   },
   "missions": [
+    {
+      "id": "MSN-170969-811",
+      "name": "Obstacle Avoidance Lifecycle Test",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "MEDIUM",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-1",
+      "targetWorkstationName": "Rover Bay 1",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        2,
+        3
+      ],
+      "currentCoords": [
+        2,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "currentStepIndex": 4,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 4,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Operator manually assigned TurtleBot 4 (Alpha) to mission.",
+      "createdAt": "2026-10-20T15:46:10.969Z",
+      "completedAt": "2026-10-20T15:46:11.020Z",
+      "blockedReason": null
+    },
+    {
+      "id": "MSN-170945-800",
+      "name": "Autonomous Verification Sortie (Re-run)",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Re-dispatched sortie based on MSN-170925-853 profile.",
+      "createdAt": "2026-10-20T15:46:10.945Z",
+      "completedAt": "2026-10-20T15:46:10.950Z"
+    },
+    {
+      "id": "MSN-170925-853",
+      "name": "Autonomous Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "TurtleBot 4 (Alpha) selected: Battery level 93.6% (>= 20% safety reserve), MOBILE_ROBOT chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 12 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T15:46:10.925Z",
+      "completedAt": "2026-10-20T15:46:10.939Z",
+      "blockedReason": null
+    },
+    {
+      "id": "MSN-110195-479",
+      "name": "Obstacle Avoidance Lifecycle Test",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "MEDIUM",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-1",
+      "targetWorkstationName": "Rover Bay 1",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        2,
+        3
+      ],
+      "currentCoords": [
+        2,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "currentStepIndex": 4,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 4,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Operator manually assigned TurtleBot 4 (Alpha) to mission.",
+      "createdAt": "2026-10-20T15:45:10.195Z",
+      "completedAt": "2026-10-20T15:45:10.243Z",
+      "blockedReason": null
+    },
+    {
+      "id": "MSN-110172-361",
+      "name": "Autonomous Verification Sortie (Re-run)",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Re-dispatched sortie based on MSN-110156-703 profile.",
+      "createdAt": "2026-10-20T15:45:10.172Z",
+      "completedAt": "2026-10-20T15:45:10.176Z"
+    },
+    {
+      "id": "MSN-110156-703",
+      "name": "Autonomous Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "TurtleBot 4 (Alpha) selected: Battery level 93.6% (>= 20% safety reserve), MOBILE_ROBOT chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 12 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T15:45:10.156Z",
+      "completedAt": "2026-10-20T15:45:10.167Z",
+      "blockedReason": null
+    },
+    {
+      "id": "MSN-084531-149",
+      "name": "Dynamic Pathfinding Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "MEDIUM",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-1",
+      "targetWorkstationName": "Rover Bay 1",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        2,
+        3
+      ],
+      "currentCoords": [
+        2,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "currentStepIndex": 4,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 4,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Operator manually assigned TurtleBot 4 (Alpha) to mission.",
+      "createdAt": "2026-10-20T15:44:44.531Z",
+      "completedAt": "2026-10-20T15:44:44.569Z",
+      "blockedReason": null
+    },
+    {
+      "id": "MSN-813741-196",
+      "name": "Autonomous Sortie #705",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-1",
+      "targetWorkstationName": "Rover Bay 1",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        2,
+        3
+      ],
+      "currentCoords": [
+        2,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "currentStepIndex": 12,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 12,
+      "batteryConsumed": 3.6,
+      "elapsedSeconds": 52,
+      "selectionReason": "TurtleBot 4 (Alpha) selected: Battery level 97.2% (>= 20% safety reserve), MOBILE_ROBOT chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 4 cells to Rover Bay 1.",
+      "createdAt": "2026-10-20T15:23:33.741Z",
+      "completedAt": "2026-10-20T15:24:25.491Z"
+    },
+    {
+      "id": "MSN-772509-313",
+      "name": "Autonomous Sortie #722",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-1",
+      "targetWorkstationName": "Rover Bay 1",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        2,
+        3
+      ],
+      "currentCoords": [
+        2,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "currentStepIndex": 6,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 6,
+      "batteryConsumed": 1.8,
+      "elapsedSeconds": 28,
+      "selectionReason": "TurtleBot 4 (Alpha) selected: Battery level 99.0% (>= 20% safety reserve), MOBILE_ROBOT chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 4 cells to Rover Bay 1.",
+      "createdAt": "2026-10-20T15:22:52.509Z",
+      "completedAt": "2026-10-20T15:23:17.376Z"
+    },
+    {
+      "id": "MSN-679458-363",
+      "name": "Autonomous Verification Sortie (Re-run)",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Re-dispatched sortie based on MSN-679445-555 profile.",
+      "createdAt": "2026-10-20T15:21:19.458Z",
+      "completedAt": "2026-10-20T15:21:19.462Z"
+    },
+    {
+      "id": "MSN-679445-555",
+      "name": "Autonomous Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 16,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 16,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "TurtleBot 4 (Alpha) selected: Battery level 99.0% (>= 20% safety reserve), MOBILE_ROBOT chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 12 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T15:21:19.445Z",
+      "completedAt": "2026-10-20T15:21:19.454Z"
+    },
     {
       "id": "MSN-486038-260",
       "name": "Autonomous Verification Sortie (Re-run)",

@@ -183,6 +183,35 @@ setInterval(() => {
       if (msn.status === 'IN_TRANSIT') {
         msn.elapsedSeconds = (msn.elapsedSeconds || 0) + 4;
         if (msn.currentStepIndex < msn.path.length - 1) {
+          const nextCoord = msn.path[msn.currentStepIndex + 1];
+          const allObs = [...STATIC_OBSTACLES, ...activeDynamicObstacles];
+          const isNextBlocked = allObs.some(o => o[0] === nextCoord[0] && o[1] === nextCoord[1]);
+
+          if (isNextBlocked) {
+            // Dynamic collision avoidance: Attempt A* replanning from current waypoint
+            const replan = findAStarPath(msn.currentCoords, msn.targetCoords, activeDynamicObstacles);
+            if (replan.success && replan.path.length > 1) {
+              const traveled = msn.path.slice(0, msn.currentStepIndex + 1);
+              msn.path = [...traveled, ...replan.path.slice(1)];
+              msn.pathLength = msn.path.length - 1;
+              msn.progressPct = Math.min(99, Math.round((msn.currentStepIndex / (msn.path.length - 1)) * 100));
+              logActivity('MISSION_REROUTED', 'MISSION', msn.id, 'autonomous-simulator', `Obstacle detected ahead at (${nextCoord[0]},${nextCoord[1]}). Trajectory dynamically re-routed (${replan.pathLength} nodes).`);
+              createNotification('Trajectory Re-routed', `${msn.name} dynamically re-routed around obstacle at (${nextCoord[0]},${nextCoord[1]}).`, 'INFO', 'SIMULATOR', msn.id);
+            } else {
+              // Safety Invariant: Target obstructed -> Safe Emergency Halt (Robot stops, zero collision)
+              msn.status = 'BLOCKED';
+              msn.blockedReason = `Obstacle ahead at (${nextCoord[0]}, ${nextCoord[1]}). Destination is completely obstructed. Safe halt engaged.`;
+              const assignedRobot = db.devices.find(d => d.id === msn.robotId);
+              if (assignedRobot) {
+                assignedRobot.status = 'ERROR';
+                assignedRobot.mode = 'SAFETY_HALT';
+              }
+              logActivity('SAFETY_HALT', 'MISSION', msn.id, 'autonomous-simulator', msn.blockedReason);
+              createNotification('Collision Prevention Halt', `Robot ${msn.robotName} halted safely: route blocked at (${nextCoord[0]},${nextCoord[1]}).`, 'HIGH', 'SIMULATOR', msn.id);
+              return; // Do NOT advance into obstacle
+            }
+          }
+
           msn.currentStepIndex++;
           msn.currentCoords = msn.path[msn.currentStepIndex];
           msn.progressPct = Math.min(99, Math.round((msn.currentStepIndex / (msn.path.length - 1)) * 100));
@@ -1531,7 +1560,21 @@ const server = http.createServer(async (req, res) => {
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
       
+      const checkPath = findAStarPath(mission.currentCoords || mission.startCoords, mission.targetCoords, activeDynamicObstacles);
+      if (!checkPath.success) {
+        return sendJson(res, 409, {
+          success: false,
+          conflict: true,
+          message: 'Cannot start transit: destination is currently obstructed by obstacles. Clear dynamic hazards first.'
+        });
+      }
+
+      const startIdx = mission.currentStepIndex || 0;
+      const traveled = mission.path.slice(0, startIdx + 1);
+      mission.path = [...traveled, ...checkPath.path.slice(1)];
+      mission.pathLength = mission.path.length - 1;
       mission.status = 'IN_TRANSIT';
+      mission.blockedReason = null;
       const dev = db.devices.find(d => d.id === mission.robotId);
       if (dev) {
         dev.status = 'IN_TRANSIT';
@@ -1559,9 +1602,30 @@ const server = http.createServer(async (req, res) => {
       const id = pathname.split('/')[3];
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
+
+      const checkPath = findAStarPath(mission.currentCoords, mission.targetCoords, activeDynamicObstacles);
+      if (!checkPath.success) {
+        return sendJson(res, 409, {
+          success: false,
+          conflict: true,
+          message: 'Cannot resume traversal: route is currently obstructed by obstacles. Clear hazards or abort mission.'
+        });
+      }
+
+      const curIdx = mission.currentStepIndex || 0;
+      const traveled = mission.path.slice(0, curIdx + 1);
+      mission.path = [...traveled, ...checkPath.path.slice(1)];
+      mission.pathLength = mission.path.length - 1;
       mission.status = 'IN_TRANSIT';
+      mission.blockedReason = null;
+      const dev = db.devices.find(d => d.id === mission.robotId);
+      if (dev) {
+        dev.status = 'IN_TRANSIT';
+        dev.mode = 'AUTONOMOUS_TRAVERSAL';
+      }
       saveDb(db);
-      return sendJson(res, 200, { success: true, message: 'Mission resumed', data: mission });
+      logActivity('MISSION_RESUMED', 'MISSION', mission.id, 'admin', `Resumed traversal for mission ${mission.name}`);
+      return sendJson(res, 200, { success: true, message: 'Mission resumed with validated path', data: mission });
     }
 
     if (pathname.startsWith('/api/missions/') && pathname.endsWith('/abort') && method === 'POST') {
@@ -1620,39 +1684,157 @@ const server = http.createServer(async (req, res) => {
       let coord = body.coord;
       
       const activeMission = (db.missions || []).find(m => m.status === 'IN_TRANSIT');
-      if (!coord && activeMission && activeMission.path) {
-        const nextIdx = Math.min(activeMission.path.length - 2, activeMission.currentStepIndex + 2);
-        coord = activeMission.path[nextIdx];
-      }
-      if (!coord) coord = [3, 2];
+      const staticSet = new Set(STATIC_OBSTACLES.map(o => `${o[0]},${o[1]}`));
+      const dynSet = new Set(activeDynamicObstacles.map(o => `${o[0]},${o[1]}`));
 
-      activeDynamicObstacles.push(coord);
+      // If coordinate not manually specified, find optimal dynamic hazard on upcoming trajectory
+      if (!coord && activeMission && activeMission.path) {
+        const cur = activeMission.currentCoords || activeMission.path[activeMission.currentStepIndex || 0];
+        const tgt = activeMission.targetCoords;
+        const curKey = `${cur[0]},${cur[1]}`;
+        const tgtKey = `${tgt[0]},${tgt[1]}`;
+        const curIdx = activeMission.currentStepIndex || 0;
+
+        // Search for intermediate upcoming waypoints
+        for (let i = curIdx + 1; i < activeMission.path.length - 1; i++) {
+          const pt = activeMission.path[i];
+          const k = `${pt[0]},${pt[1]}`;
+          if (k !== curKey && k !== tgtKey && !staticSet.has(k) && !dynSet.has(k)) {
+            // Check if placing hazard here allows dynamic reroute
+            const testRes = findAStarPath(cur, tgt, [...activeDynamicObstacles, pt]);
+            if (testRes.success) {
+              coord = pt;
+              break;
+            } else if (!coord) {
+              coord = pt; // Candidate even if it triggers safety halt
+            }
+          }
+        }
+      }
+
+      // If still no coordinate, pick an unoccupied lab cell
+      if (!coord) {
+        for (let c = 3; c < GRID_COLS - 2; c++) {
+          for (let r = 2; r < GRID_ROWS - 2; r++) {
+            const k = `${c},${r}`;
+            if (!staticSet.has(k) && !dynSet.has(k)) {
+              if (activeMission) {
+                const cur = activeMission.currentCoords || [0, 0];
+                const tgt = activeMission.targetCoords || [0, 0];
+                if ((cur[0] === c && cur[1] === r) || (tgt[0] === c && tgt[1] === r)) continue;
+              }
+              coord = [c, r];
+              break;
+            }
+          }
+          if (coord) break;
+        }
+      }
+
+      if (!coord) {
+        return sendJson(res, 400, { success: false, message: 'Cannot inject hazard: no unoccupied grid cell available.' });
+      }
+
+      // Bounds and position validation
+      const cx = Number(coord[0]);
+      const cy = Number(coord[1]);
+      if (isNaN(cx) || isNaN(cy) || cx < 0 || cx >= GRID_COLS || cy < 0 || cy >= GRID_ROWS) {
+        return sendJson(res, 400, { success: false, message: `Hazard coordinate (${coord}) is outside grid boundaries (16x10).` });
+      }
+
+      if (staticSet.has(`${cx},${cy}`)) {
+        return sendJson(res, 400, { success: false, message: `Coordinate (${cx}, ${cy}) is already occupied by a static workstation or partition.` });
+      }
+
+      if (dynSet.has(`${cx},${cy}`)) {
+        return sendJson(res, 400, { success: false, message: `Coordinate (${cx}, ${cy}) already has an active dynamic hazard.` });
+      }
+
+      if (activeMission) {
+        const cur = activeMission.currentCoords || activeMission.path[activeMission.currentStepIndex || 0];
+        const tgt = activeMission.targetCoords;
+        if (cur[0] === cx && cur[1] === cy) {
+          return sendJson(res, 400, { success: false, message: `Cannot place hazard directly on robot current position (${cx}, ${cy}).` });
+        }
+        if (tgt[0] === cx && tgt[1] === cy) {
+          return sendJson(res, 400, { success: false, message: `Cannot place hazard directly on destination target (${cx}, ${cy}).` });
+        }
+      }
+
+      activeDynamicObstacles.push([cx, cy]);
 
       let rerouteMsg = '';
       if (activeMission && activeMission.status === 'IN_TRANSIT') {
         const remainingGoal = activeMission.targetCoords;
-        const currentPos = activeMission.currentCoords;
+        const currentPos = activeMission.currentCoords || activeMission.path[activeMission.currentStepIndex || 0];
         const newPathRes = findAStarPath(currentPos, remainingGoal, activeDynamicObstacles);
         if (newPathRes.success) {
-          const traveledSoFar = activeMission.path.slice(0, activeMission.currentStepIndex);
-          activeMission.path = [...traveledSoFar, ...newPathRes.path];
+          const curIdx = activeMission.currentStepIndex || 0;
+          const traveledSoFar = activeMission.path.slice(0, curIdx + 1);
+          activeMission.path = [...traveledSoFar, ...newPathRes.path.slice(1)];
           activeMission.pathLength = activeMission.path.length - 1;
-          rerouteMsg = `Hazard placed at (${coord[0]}, ${coord[1]}). Dynamic A* path recalculated with ${newPathRes.pathLength} remaining steps.`;
+          activeMission.progressPct = Math.round((curIdx / (activeMission.path.length - 1)) * 100);
+          rerouteMsg = `Hazard placed at (${cx}, ${cy}). Dynamic A* path recalculated with ${newPathRes.pathLength} remaining steps.`;
         } else {
-          rerouteMsg = `Hazard placed at (${coord[0]}, ${coord[1]}). Warning: target currently unreachable.`;
+          // Strict Safety Halt: target unreachable, freeze robot before obstacle
+          activeMission.status = 'BLOCKED';
+          activeMission.blockedReason = `Dynamic hazard placed at (${cx}, ${cy}). Destination is currently unreachable. Safety halt engaged.`;
+          const dev = db.devices.find(d => d.id === activeMission.robotId);
+          if (dev) {
+            dev.status = 'ERROR';
+            dev.mode = 'SAFETY_HALT';
+          }
+          rerouteMsg = `Hazard placed at (${cx}, ${cy}). Target obstructed — Safety halt engaged (Zero collision).`;
         }
         saveDb(db);
       } else {
-        rerouteMsg = `Dynamic hazard placed at (${coord[0]}, ${coord[1]}).`;
+        rerouteMsg = `Dynamic hazard placed at (${cx}, ${cy}).`;
       }
 
-      logActivity('HAZARD_INJECTED', 'SIMULATOR', `${coord[0]},${coord[1]}`, 'admin', rerouteMsg);
+      logActivity('HAZARD_INJECTED', 'SIMULATOR', `${cx},${cy}`, 'admin', rerouteMsg);
       createNotification('Simulated Hazard Injected', rerouteMsg, 'HIGH', 'SIMULATOR', 'hazard-1');
       return sendJson(res, 200, {
         success: true,
         message: rerouteMsg,
-        obstacle: coord,
+        obstacle: [cx, cy],
         activeDynamicObstacles
+      });
+    }
+
+    if (pathname === '/api/missions/clear-obstacles' && method === 'POST') {
+      const clearedCount = activeDynamicObstacles.length;
+      activeDynamicObstacles = [];
+
+      let unblockedCount = 0;
+      if (db.missions) {
+        db.missions.forEach(msn => {
+          if (msn.status === 'BLOCKED') {
+            const replan = findAStarPath(msn.currentCoords, msn.targetCoords, activeDynamicObstacles);
+            if (replan.success) {
+              const curIdx = msn.currentStepIndex || 0;
+              const traveledSoFar = msn.path.slice(0, curIdx + 1);
+              msn.path = [...traveledSoFar, ...replan.path.slice(1)];
+              msn.pathLength = msn.path.length - 1;
+              msn.status = 'IN_TRANSIT';
+              msn.blockedReason = null;
+              const dev = db.devices.find(d => d.id === msn.robotId);
+              if (dev) {
+                dev.status = 'IN_TRANSIT';
+                dev.mode = 'AUTONOMOUS_TRAVERSAL';
+              }
+              unblockedCount++;
+              logActivity('MISSION_RESUMED', 'MISSION', msn.id, 'autonomous-simulator', `Hazards cleared: Mission ${msn.name} resumed trajectory to ${msn.targetWorkstationName}.`);
+            }
+          }
+        });
+      }
+      saveDb(db);
+      logActivity('OBSTACLES_CLEARED', 'SIMULATOR', 'all', 'admin', `Cleared ${clearedCount} dynamic hazards. Unblocked ${unblockedCount} missions.`);
+      createNotification('Dynamic Hazards Cleared', `Removed ${clearedCount} active hazards from navigation grid.`, 'INFO', 'SIMULATOR', 'clear-obs');
+      return sendJson(res, 200, {
+        success: true,
+        message: `Cleared ${clearedCount} dynamic hazard(s). ${unblockedCount} mission(s) resumed.`,
+        activeDynamicObstacles: []
       });
     }
 
@@ -3786,16 +3968,32 @@ function renderNexusUi() {
       if (activeMsn) {
         const isRunning = activeMsn.status === 'IN_TRANSIT';
         const isPaused = activeMsn.status === 'PAUSED';
+        const isBlocked = activeMsn.status === 'BLOCKED';
         const isDone = activeMsn.status === 'COMPLETED';
 
+        let blockedBanner = '';
+        if (isBlocked) {
+          blockedBanner = '<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); border-radius: 6px; padding: 0.75rem 0.9rem; font-size: 0.8rem; margin-bottom: 0.65rem;">' +
+            '<div style="color: var(--danger); font-weight: 700; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">' +
+              '<span>⚠️</span> COLLISION PREVENTED: SAFETY HALT ENGAGED' +
+            '</div>' +
+            '<div style="color: #cbd5e1; font-size: 0.78rem;">' + (activeMsn.blockedReason || 'Trajectory is obstructed. Robot halted safely to prevent collision.') + '</div>' +
+            '<div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">' +
+              '<button class="btn btn-primary" style="padding: 3px 10px; font-size: 0.75rem; font-weight: 700;" onclick="clearDynamicObstacles()">🧹 Clear Hazards & Auto-Resume</button>' +
+              '<button class="btn btn-danger" style="padding: 3px 10px; font-size: 0.75rem;" onclick="abortMission(&apos;' + activeMsn.id + '&apos;)">⏹️ Abort</button>' +
+            '</div>' +
+          '</div>';
+        }
+
         activeMsnHtml = '<div style="display: flex; flex-direction: column; gap: 0.85rem;">' +
+          blockedBanner +
           '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
             '<div>' +
               '<span style="font-size: 0.75rem; color: var(--primary); font-family: monospace; font-weight: 700;">' + activeMsn.id + ' • ' + activeMsn.type + '</span>' +
               '<h3 style="font-size: 1.15rem; margin-top: 2px;">' + activeMsn.name + '</h3>' +
             '</div>' +
             '<div style="display: flex; gap: 0.35rem; align-items: center;">' +
-              '<span class="badge" style="background: ' + (isRunning ? 'rgba(6, 182, 212, 0.15)' : isDone ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)') + '; color: ' + (isRunning ? 'var(--primary)' : isDone ? 'var(--success)' : 'var(--warning)') + ';">' + activeMsn.status + '</span>' +
+              '<span class="badge" style="background: ' + (isRunning ? 'rgba(6, 182, 212, 0.15)' : isDone ? 'rgba(16, 185, 129, 0.15)' : isBlocked ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.15)') + '; color: ' + (isRunning ? 'var(--primary)' : isDone ? 'var(--success)' : isBlocked ? 'var(--danger)' : 'var(--warning)') + ';">' + activeMsn.status + '</span>' +
               '<button class="btn btn-outline" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openNewMissionModal()">+ New</button>' +
             '</div>' +
           '</div>' +
@@ -3806,7 +4004,7 @@ function renderNexusUi() {
               '<strong>' + (activeMsn.progressPct || 0) + '% (Step ' + (activeMsn.currentStepIndex || 0) + '/' + (activeMsn.pathLength || 0) + ')</strong>' +
             '</div>' +
             '<div style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden;">' +
-              '<div style="background: var(--primary); height: 100%; width: ' + (activeMsn.progressPct || 0) + '%; transition: width 0.4s;"></div>' +
+              '<div style="background: ' + (isBlocked ? 'var(--danger)' : 'var(--primary)') + '; height: 100%; width: ' + (activeMsn.progressPct || 0) + '%; transition: width 0.4s;"></div>' +
             '</div>' +
           '</div>' +
 
@@ -3827,12 +4025,14 @@ function renderNexusUi() {
           '</div>' +
 
           '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem;">' +
-            (!isRunning && !isDone ? '<button class="btn btn-primary" style="background: var(--success); font-weight: 700;" onclick="startMission(&apos;' + activeMsn.id + '&apos;)">▶️ Start Traversal</button>' : '') +
+            (!isRunning && !isDone && !isBlocked ? '<button class="btn btn-primary" style="background: var(--success); font-weight: 700;" onclick="startMission(&apos;' + activeMsn.id + '&apos;)">▶️ Start Traversal</button>' : '') +
             (isRunning ? '<button class="btn btn-outline" onclick="pauseMission(&apos;' + activeMsn.id + '&apos;)">⏸️ Pause</button>' : '') +
             (isPaused ? '<button class="btn btn-primary" onclick="resumeMission(&apos;' + activeMsn.id + '&apos;)">▶️ Resume</button>' : '') +
+            (isBlocked ? '<button class="btn btn-primary" style="font-weight: 700;" onclick="clearDynamicObstacles()">🧹 Clear Hazards & Resume</button>' : '') +
             (!isDone ? '<button class="btn btn-danger" onclick="abortMission(&apos;' + activeMsn.id + '&apos;)">⏹️ Abort</button>' : '') +
             (!isDone ? '<button class="btn btn-outline" onclick="completeMission(&apos;' + activeMsn.id + '&apos;)">🏁 Force Complete</button>' : '') +
             (isRunning ? '<button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="injectDynamicObstacle()">🚧 Inject Dynamic Hazard</button>' : '') +
+            (dynObstacles.length > 0 ? '<button class="btn btn-outline" style="border-color: var(--primary); color: var(--primary);" onclick="clearDynamicObstacles()">🧹 Clear Hazards (' + dynObstacles.length + ')</button>' : '') +
             (isDone ? '<button class="btn btn-primary" onclick="openNewMissionModal()">🚀 Launch Next Mission</button>' : '') +
             (isDone ? '<button class="btn btn-outline" onclick="relaunchMission(&apos;' + activeMsn.id + '&apos;)">🔁 Re-Dispatch Sortie</button>' : '') +
           '</div>' +
@@ -3846,6 +4046,7 @@ function renderNexusUi() {
             <div style="font-size: 0.8rem; color: var(--text-muted);">Real-Time Kinematic Grid (16x10 Nodes) • Deterministic A* Pathfinding • Multi-Agent Collision Avoidance</div>
           </div>
           <div style="display: flex; gap: 0.5rem; align-items: center;">
+            \${dynObstacles.length > 0 ? '<button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning); font-size: 0.82rem; padding: 0.5rem 0.85rem;" onclick="clearDynamicObstacles()">🧹 Clear Hazards (' + dynObstacles.length + ')</button>' : ''}
             <button class="btn btn-primary" onclick="openNewMissionModal()" style="font-size: 0.92rem; padding: 0.55rem 1.25rem; font-weight: 700; background: linear-gradient(135deg, #06b6d4, #2563eb); border: none; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);">
               🚀 + Create New Mission
             </button>
@@ -4105,6 +4306,13 @@ function renderNexusUi() {
     }
     async function injectDynamicObstacle() {
       const res = await apiFetch('/api/missions/inject-obstacle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      if (res && res.success) {
+        showToast(res.message);
+        renderCurrentView();
+      }
+    }
+    async function clearDynamicObstacles() {
+      const res = await apiFetch('/api/missions/clear-obstacles', { method: 'POST' });
       if (res && res.success) {
         showToast(res.message);
         renderCurrentView();
