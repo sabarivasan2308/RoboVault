@@ -335,6 +335,87 @@
   ],
   "activityLogs": [
     {
+      "id": "act-1792505031268",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-031261",
+      "performedBy": "admin",
+      "details": "Mission Telemetry Verification Sortie manually completed",
+      "timestamp": "2026-10-20T14:03:51.268Z"
+    },
+    {
+      "id": "act-1792505031265",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-031261",
+      "performedBy": "admin",
+      "details": "Started transit for mission Telemetry Verification Sortie",
+      "timestamp": "2026-10-20T14:03:51.265Z"
+    },
+    {
+      "id": "act-1792505031262",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-031261",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Telemetry Verification Sortie assigned to Crazyflie Swarm Drone A1",
+      "timestamp": "2026-10-20T14:03:51.262Z"
+    },
+    {
+      "id": "act-1792504906427",
+      "action": "MISSION_COMPLETED",
+      "entityType": "MISSION",
+      "entityId": "MSN-906421",
+      "performedBy": "admin",
+      "details": "Mission Telemetry Verification Sortie manually completed",
+      "timestamp": "2026-10-20T14:01:46.427Z"
+    },
+    {
+      "id": "act-1792504906425",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-906421",
+      "performedBy": "admin",
+      "details": "Started transit for mission Telemetry Verification Sortie",
+      "timestamp": "2026-10-20T14:01:46.425Z"
+    },
+    {
+      "id": "act-1792504906422",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-906421",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Telemetry Verification Sortie assigned to Bionic Arm Workstation",
+      "timestamp": "2026-10-20T14:01:46.422Z"
+    },
+    {
+      "id": "act-1792504880416",
+      "action": "HAZARD_INJECTED",
+      "entityType": "SIMULATOR",
+      "entityId": "7,2",
+      "performedBy": "admin",
+      "details": "Hazard placed at (7, 2). Dynamic A* path recalculated with 7 remaining steps.",
+      "timestamp": "2026-10-20T14:01:20.416Z"
+    },
+    {
+      "id": "act-1792504880409",
+      "action": "MISSION_STARTED",
+      "entityType": "MISSION",
+      "entityId": "MSN-880265",
+      "performedBy": "admin",
+      "details": "Started transit for mission Critical Circuit Delivery",
+      "timestamp": "2026-10-20T14:01:20.409Z"
+    },
+    {
+      "id": "act-1792504880266",
+      "action": "MISSION_CREATED",
+      "entityType": "MISSION",
+      "entityId": "MSN-880265",
+      "performedBy": "admin",
+      "details": "Configured autonomous mission: Critical Circuit Delivery assigned to Crazyflie Swarm Drone A1",
+      "timestamp": "2026-10-20T14:01:20.266Z"
+    },
+    {
       "id": "act-1792502657498",
       "action": "RESERVATION_CREATED",
       "entityType": "RESERVATION",
@@ -413,29 +494,30 @@
       "assetId": "RB-ROBOT-001",
       "type": "MOBILE_ROBOT",
       "status": "RUNNING",
-      "battery": 57.2,
-      "temperature": 59.4,
-      "motorRpm": 119,
-      "runtimeHours": 643.84,
+      "battery": 5.8,
+      "temperature": 81.9,
+      "motorRpm": 122,
+      "runtimeHours": 646.41,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.101",
       "mode": "AUTONOMOUS_NAV",
-      "lastPing": "2026-10-20T13:38:46.206Z"
+      "lastPing": "2026-10-20T14:04:58.321Z",
+      "lowBatAlerted": true
     },
     {
       "id": "dev-arm-02",
       "name": "Bionic Arm Workstation",
       "assetId": "RB-MOTOR-027",
       "type": "ARM_MANIPULATOR",
-      "status": "RUNNING",
-      "battery": 69.2,
-      "temperature": 46.8,
-      "motorRpm": 100,
-      "runtimeHours": 982.34,
+      "status": "AVAILABLE",
+      "battery": 27.4,
+      "temperature": 66.4,
+      "motorRpm": 129,
+      "runtimeHours": 984.43,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.104",
-      "mode": "TRAJECTORY_FOLLOWING",
-      "lastPing": "2026-10-20T13:38:46.206Z"
+      "mode": "IDLE_STANDBY",
+      "lastPing": "2026-10-20T14:04:58.321Z"
     },
     {
       "id": "dev-prusa-03",
@@ -450,7 +532,7 @@
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.112",
       "mode": "THERMAL_DIAGNOSTIC",
-      "lastPing": "2026-10-20T13:38:46.206Z"
+      "lastPing": "2026-10-20T14:04:58.321Z"
     },
     {
       "id": "dev-drone-04",
@@ -458,17 +540,27 @@
       "assetId": "RB-ESP32-014",
       "type": "UAV_DRONE",
       "status": "AVAILABLE",
-      "battery": 99,
+      "battery": 96.9,
       "temperature": 29.1,
       "motorRpm": 0,
       "runtimeHours": 214.3,
       "connectionStatus": "ONLINE",
       "ipAddress": "192.168.10.120",
-      "mode": "DOCK_RECHARGE",
-      "lastPing": "2026-10-20T13:38:46.206Z"
+      "mode": "IDLE_STANDBY",
+      "lastPing": "2026-10-20T14:04:58.321Z"
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1792504880417",
+      "title": "Simulated Hazard Injected",
+      "message": "Hazard placed at (7, 2). Dynamic A* path recalculated with 7 remaining steps.",
+      "severity": "HIGH",
+      "entityType": "SIMULATOR",
+      "entityId": "hazard-1",
+      "read": false,
+      "timestamp": "2026-10-20T14:01:20.417Z"
+    },
     {
       "id": "notif-1792502657499",
       "title": "Resource Reserved",
@@ -583,7 +675,7 @@
         "height": 90,
         "assetId": "RB-ESP32-014",
         "assetName": "Swarm Telemetry Node",
-        "status": "CHARGING",
+        "status": "AVAILABLE",
         "operator": "Autonomous System"
       },
       {
@@ -595,7 +687,7 @@
         "height": 90,
         "assetId": "RB-MOTOR-027",
         "assetName": "Dynamixel MX-64AT Actuator",
-        "status": "IN_USE",
+        "status": "AVAILABLE",
         "operator": "Dr. Sarah Vance"
       },
       {
@@ -647,5 +739,306 @@
         "operator": "None"
       }
     ]
-  }
+  },
+  "missions": [
+    {
+      "id": "MSN-031261",
+      "name": "Telemetry Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-drone-04",
+      "robotName": "Crazyflie Swarm Drone A1",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        8,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          8,
+          1
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 4,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 4,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Crazyflie Swarm Drone A1 selected: Battery level 96.9% (>= 20% safety reserve), UAV_DRONE chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 4 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T14:03:51.261Z",
+      "completedAt": "2026-10-20T14:03:51.267Z"
+    },
+    {
+      "id": "MSN-906421",
+      "name": "Telemetry Verification Sortie",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-arm-02",
+      "robotName": "Bionic Arm Workstation",
+      "targetWorkstationId": "ws-3",
+      "targetWorkstationName": "Drone Helipad Alpha",
+      "startCoords": [
+        15,
+        1
+      ],
+      "targetCoords": [
+        10,
+        3
+      ],
+      "currentCoords": [
+        10,
+        3
+      ],
+      "path": [
+        [
+          15,
+          1
+        ],
+        [
+          14,
+          1
+        ],
+        [
+          13,
+          1
+        ],
+        [
+          12,
+          1
+        ],
+        [
+          11,
+          1
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          11,
+          3
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "currentStepIndex": 7,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 7,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "Bionic Arm Workstation selected: Battery level 27.4% (>= 20% safety reserve), ARM_MANIPULATOR chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 7 cells to Drone Helipad Alpha.",
+      "createdAt": "2026-10-20T14:01:46.421Z",
+      "completedAt": "2026-10-20T14:01:46.426Z"
+    },
+    {
+      "id": "MSN-880265",
+      "name": "Critical Circuit Delivery",
+      "type": "PAYLOAD_DELIVERY",
+      "priority": "HIGH",
+      "robotId": "dev-drone-04",
+      "robotName": "Crazyflie Swarm Drone A1",
+      "targetWorkstationId": "ws-4",
+      "targetWorkstationName": "Bionic Arm Jig",
+      "startCoords": [
+        8,
+        1
+      ],
+      "targetCoords": [
+        13,
+        3
+      ],
+      "currentCoords": [
+        13,
+        3
+      ],
+      "path": [
+        [
+          8,
+          1
+        ],
+        [
+          9,
+          1
+        ],
+        [
+          10,
+          1
+        ],
+        [
+          11,
+          1
+        ],
+        [
+          12,
+          1
+        ],
+        [
+          12,
+          2
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          13,
+          3
+        ]
+      ],
+      "currentStepIndex": 7,
+      "status": "COMPLETED",
+      "progressPct": 100,
+      "pathLength": 7,
+      "batteryConsumed": 2.1,
+      "elapsedSeconds": 32,
+      "selectionReason": "Crazyflie Swarm Drone A1 selected: Battery level 99.0% (>= 20% safety reserve), UAV_DRONE chassis matches PAYLOAD_DELIVERY profile, initial Manhattan distance 7 cells to Bionic Arm Jig.",
+      "createdAt": "2026-10-20T14:01:20.265Z",
+      "completedAt": "2026-10-20T14:01:49.854Z"
+    },
+    {
+      "id": "MSN-2026-001",
+      "name": "LiDAR Payload Delivery to Bay 1",
+      "type": "PAYLOAD_DELIVERY",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-1",
+      "targetWorkstationName": "Rover Bay 1",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        2,
+        3
+      ],
+      "currentCoords": [
+        2,
+        3
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "currentStepIndex": 4,
+      "status": "COMPLETED",
+      "priority": "HIGH",
+      "pathLength": 4,
+      "batteryConsumed": 3.2,
+      "elapsedSeconds": 16,
+      "selectionReason": "Optimal battery reserve (84% >= 30%), ground AGV payload chassis matched required cargo.",
+      "createdAt": "2026-10-20T10:00:00Z",
+      "completedAt": "2026-10-20T10:01:12Z"
+    },
+    {
+      "id": "MSN-2026-002",
+      "name": "Perimeter Environmental SLAM Sweep",
+      "type": "PERIMETER_SURVEILLANCE",
+      "robotId": "dev-tb4-01",
+      "robotName": "TurtleBot 4 (Alpha)",
+      "targetWorkstationId": "ws-2",
+      "targetWorkstationName": "LIDAR Test Bench",
+      "startCoords": [
+        0,
+        1
+      ],
+      "targetCoords": [
+        5,
+        3
+      ],
+      "currentCoords": [
+        0,
+        1
+      ],
+      "path": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ]
+      ],
+      "currentStepIndex": 0,
+      "status": "READY",
+      "priority": "MEDIUM",
+      "pathLength": 7,
+      "batteryConsumed": 0,
+      "elapsedSeconds": 0,
+      "selectionReason": "TurtleBot 4 onboard 360° laser scanner matched perimeter mapping profile.",
+      "createdAt": "2026-10-20T11:15:00Z",
+      "completedAt": null
+    }
+  ]
 }
