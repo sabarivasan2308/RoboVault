@@ -8,6 +8,7 @@
 **Automated Verification Suite:** `run-verify.bat` — **15/15 Test Suites PASSED (100%)**  
 **Deterministic Mission Lifecycle Suite:** `run-lifecycle-test.bat` — **6/6 Subtests PASSED (100%)**  
 **DOM & Navigation Render Suite:** `run-verify-render.bat` — **12/12 Tabs Render Verified (100%)**  
+**Headless Browser & Live DOM Suite:** `run-verify-browser.bat` — **4/4 Checks PASSED (100%)**<br>
 **Model Evaluation Benchmark:** `run-model-eval.bat` — **98.4% Accuracy, 100% Recall, 96.77% F1-Score (500 Samples)**  
 
 ---
@@ -255,8 +256,8 @@ Disk persisted status: COMPLETED completedAt: 2026-10-20T16:16:37.451Z
 🧪 CLIENT-SIDE DOM & NAVIGATION RENDER TEST
 ========================================================
 [✓] Client script compiled & executed in browser sandbox without error.
-[✓] Tab 'dashboard': PASS (Rendered 11236 characters of HTML)
-[✓] Tab 'missions': PASS (Rendered 42348 characters of HTML)
+[✓] Tab 'dashboard': PASS (Rendered 11338 characters of HTML)
+[✓] Tab 'missions': PASS (Rendered 70471 characters of HTML)
 [✓] Tab 'predictive': PASS (Rendered 28767 characters of HTML)
 [✓] Tab 'digitalTwin': PASS (Rendered 7752 characters of HTML)
 [✓] Tab 'research': PASS (Rendered 10313 characters of HTML)
@@ -266,9 +267,45 @@ Disk persisted status: COMPLETED completedAt: 2026-10-20T16:16:37.451Z
 [✓] Tab 'scheduling': PASS (Rendered 3348 characters of HTML)
 [✓] Tab 'faults': PASS (Rendered 1714 characters of HTML)
 [✓] Tab 'reports': PASS (Rendered 2330 characters of HTML)
-[✓] Tab 'health': PASS (Rendered 4578 characters of HTML)
+[✓] Tab 'health': PASS (Rendered 4581 characters of HTML)
 ========================================================
 🎉 ALL TAB RENDERS & NAVIGATION TEST SUITES PASSED!
+```
+
+### Headless Browser & Live DOM Suite Output (Chrome 4/4 Passed):
+```text
+========================================================
+🌐 BROWSER WORKFLOW & LIVE DOM HEADLESS VERIFICATION
+========================================================
+[1/4] Running headless Chrome to dump live DOM from http://localhost:3000...
+[✓] Headless Chrome connected and dumped 152767 characters of live DOM.
+  [✓] Verified DOM component: Application Title
+  [✓] Verified DOM component: Simulated Provider Watermark
+  [✓] Verified DOM component: Dashboard Tab Button
+  [✓] Verified DOM component: Missions Tab Button
+  [✓] Verified DOM component: Digital Twin Tab Button
+  [✓] Verified DOM component: Predictive Health Tab Button
+  [✓] Verified DOM component: Research Intelligence Tab Button
+  [✓] Verified DOM component: Assets Tab Button
+  [✓] Verified DOM component: Tracked Hardware Metric Card
+  [✓] Verified DOM component: Fleet Utilization Metric Card
+  [✓] Verified DOM component: Laboratory Digital Twin Schema
+
+[2/4] Verifying live API telemetry state from port 3000...
+[✓] Engine Status: UP, Uptime: 4181s, Memory: 6.3 MB (Heap) / 97.0 MB (RSS)
+
+[3/4] Verifying mission dispatch & obstacle clearance API...
+[✓] Dynamic obstacles cleared.
+
+[4/4] Verifying mission records in database persistence...
+[✓] Live Sorties Count: 48
+[✓] Available Robots for Immediate Dispatch: 3
+    - Robot: TurtleBot 4 (Alpha) (dev-tb4-01) -> Status: AVAILABLE, Mode: IDLE_STANDBY, Battery: 82.5%
+    - Robot: Bionic Arm Workstation (dev-arm-02) -> Status: AVAILABLE, Mode: IDLE_STANDBY, Battery: 27.4%
+    - Robot: Prusa MK4 Fabrication Cell (dev-prusa-03) -> Status: WARNING, Mode: THERMAL_DIAGNOSTIC, Battery: 100%
+    - Robot: Crazyflie Swarm Drone A1 (dev-drone-04) -> Status: AVAILABLE, Mode: IDLE_STANDBY, Battery: 93.6%
+
+🎉 ALL HEADLESS BROWSER & LIVE SYSTEM CHECKS PASSED (100%)!
 ```
 
 ### Explainable Predictive Model Benchmark Output:
