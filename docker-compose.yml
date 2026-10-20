@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: robovault-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: robovault
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - robovault-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: robovault-backend
+    restart: always
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/robovault
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=prod
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - robovault-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: robovault-frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - robovault-net
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  robovault-net:
+    driver: bridge
+

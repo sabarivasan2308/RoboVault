@@ -1,0 +1,46 @@
+# RoboVault - Global Git Ignore
+
+# Node / Frontend
+node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java / Maven / Backend
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE & Editors
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker & Environment
+.env
+!.env.example
+data/
+mongo_data/
+
+# OS specific
+Desktop.ini
+$RECYCLE.BIN/
+
