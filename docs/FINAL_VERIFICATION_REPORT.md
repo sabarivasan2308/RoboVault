@@ -2,10 +2,11 @@
 
 **Audit Date:** October 20, 2026  
 **Audited Target Directory:** `C:\Users\sabarivasan\.gemini\antigravity\scratch\RoboVault`  
-**Active Local Daemon:** `http://localhost:3000` (Listening, Task 1650)  
+**Active Local Daemon:** `http://localhost:3000` (Listening, Task 1780)  
 **Git Branch:** `main`  
 **Configured GitHub Remote:** `https://github.com/sabarivasan2308/RoboVault`  
-**Automated Verification Suite:** `run-verify.bat` — **14/14 Test Suites PASSED (100%)**  
+**Automated Verification Suite:** `run-verify.bat` — **15/15 Test Suites PASSED (100%)**  
+**Deterministic Mission Lifecycle Suite:** `run-lifecycle-test.bat` — **6/6 Subtests PASSED (100%)**  
 **DOM & Navigation Render Suite:** `run-verify-render.bat` — **12/12 Tabs Render Verified (100%)**  
 **Model Evaluation Benchmark:** `run-model-eval.bat` — **98.4% Accuracy, 100% Recall, 96.77% F1-Score (500 Samples)**  
 
@@ -24,6 +25,7 @@ Following the autonomous continuation and audit directives:
    - **Pathfinding & Dynamic Obstacle Lifecycle:** Resolved an in-memory obstacle accumulation leak where injected hazards persisted indefinitely, walling off docking bays.
    - **Collision Prevention Invariants:** Updated the simulation ticker and obstacle injection endpoints so that robots dynamically reroute around hazards or enter an emergency safe halt (`BLOCKED` state, zero collision) if the destination is completely obstructed, preventing advancement into blocked cells.
    - **Obstacle Clearance Endpoint:** Implemented `POST /api/missions/clear-obstacles` to purge dynamic obstacles and automatically resume blocked sorties.
+   - **Autonomous Mission Completion Invariants & Robot Release:** Resolved a two-phase completion delay where missions at 100% progress (`Step N/N`) remained in `IN_TRANSIT`. The simulation ticker now immediately transitions missions to `COMPLETED`, records `completedAt`, sets `progressPct = 100`, releases the assigned robot to `AVAILABLE` / `IDLE_STANDBY`, prevents redundant ticker calculations, and provides idempotent manual completion fallbacks.
    - **Mission Control UI Controls:** Added a dedicated Mission Control toolbar, 1-click Quick Dispatch card, modal path planner, and Sortie Log Action controls (`▶️ Dispatch`, `🏁 Complete`, `🔁 Re-Dispatch`, `🧹 Clear Hazards`).
    - **Busy Robot Conflict Prevention:** Added validation ensuring a robot cannot be dispatched to multiple concurrent missions (HTTP 409 Conflict).
    - **Client-Side Rendering:** Fixed duplicate declarations and template-literal escaping, ensuring 100% error-free compilation in browser DOM contexts.
@@ -162,34 +164,89 @@ Every advanced module requested has been implemented, validated, and verified wi
   - Document collection counts across all collections.
   - Telemetry simulator ticker frequency and connected device count.
 
+### 4.12 Autonomous Sortie Lifecycle & Completion Invariants
+- **Atomic Arrival Transition:** When a robot reaches the final waypoint (`isAtDestination || currentStepIndex >= path.length - 1`), `completeMissionRecord()` executes in the exact same tick:
+  - `status = 'COMPLETED'`
+  - `progressPct = 100`
+  - `completedAt = ISO timestamp`
+  - Assigned robot released: `status = 'AVAILABLE'`, `mode = 'IDLE_STANDBY'`, `isBusy = false`
+  - Workstation released: `status = 'AVAILABLE'`
+- **Ticker Guard & Power Invariance:** Ticker strictly executes `if (msn.status !== 'IN_TRANSIT') return;`. Once completed, a mission consumes zero additional battery and accrues zero elapsed seconds.
+- **Idempotency & Operation Guards:**
+  - `POST /api/missions/:id/complete` is idempotent; repeated calls succeed without emitting redundant notifications or audit events.
+  - `POST /api/missions/:id/start` and `POST /api/missions/:id/resume` reject already completed sorties with `HTTP 400 Bad Request`.
+  - `GET /api/missions` actively audits and auto-remediates any legacy or arrived missions still marked `IN_TRANSIT`.
+
 ---
 
 ## 5. Automated Verification Results
 
-The automated regression test suite (`verify-nexus.js` executed via `run-verify.bat`) and the client-side DOM render test suite (`verify-client-render.js` executed via `run-verify-render.bat`) were executed against the live server on `http://localhost:3000`.
+The automated regression test suite (`verify-nexus.js` executed via `run-verify.bat`), the deterministic lifecycle test suite (`tests/test-mission-completion-lifecycle.js` executed via `run-lifecycle-test.bat`), and the client-side DOM render test suite (`verify-client-render.js` executed via `run-verify-render.bat`) were executed against the live server on `http://localhost:3000`.
 
-### Verification Suite Output (14/14 Passed):
+### Verification Suite Output (15/15 Passed):
 ```text
 ====================================================
 ⚡ STARTING AUTOMATED ROBO VAULT NEXUS VERIFICATION
 ====================================================
 [✓] 1. Mission Control Telemetry Summary: PASS: Tracked 89 assets, 73 available, utilization 2.2%.
-[✓] 2. Robot Fleet Telemetry (Simulated Provider): PASS: Fleet online (4 devices). Sample TurtleBot 4 (Alpha) [Bat: 93.6%, Temp: 159.3°C, RPM: 126].
+[✓] 2. Robot Fleet Telemetry (Simulated Provider): PASS: Fleet online (4 devices). Sample TurtleBot 4 (Alpha) [Bat: 82.5%, Temp: 159.3°C, RPM: 126].
 [✓] 3. Digital Twin Studio 2D Laboratory Layout: PASS: 2D Studio loaded 4 lab zones and 8 mapped workstations.
 [✓] 4. Explainable Predictive Maintenance Risk Engine: PASS: Evaluated 8 assets. Highest risk: Prusa MK4 3D Printer (25% MODERATE) - Action: "Lubricate mechanical drive trains & clean optical surfaces".
 [✓] 5. Intelligent Resource Scheduling & Conflict Detection: PASS: Capacity constraint verified! Over-allocation rejected with message: "Reservation capacity reached: all 2 unit(s) of TurtleBot 4 Mobile Base are already booked for this interval.".
-[✓] 6. Operational Notifications Subsystem: PASS: Notification queue operational (27 alerts, 22 unread).
+[✓] 6. Operational Notifications Subsystem: PASS: Notification queue operational (50 alerts, 50 unread).
 [✓] 7. Multi-Index Global Search: PASS: Global search returned asset: TurtleBot 4 Mobile Base (RB-ROBOT-001).
 [✓] 8. Reporting & RFC 4180 CSV Data Export: PASS: CSV export verified with correct headers and attachment mime-type (1053 bytes).
-[✓] 9. Platform Health & Diagnostics Observability: PASS: Engine status UP, Uptime: 19s, Memory: 5.3 MB.
-[✓] 10. A* Pathfinding Engine (Deterministic Collision Avoidance): PASS: A* calculated optimal route (16 steps, 35 nodes explored in 0.1ms). Verified static obstacle avoidance.
-[✓] 11. Autonomous Fleet Mission Lifecycle & State Machine: PASS: Verified end-to-end for MSN-170925-853 (TurtleBot 4 (Alpha)): Creation (READY) -> Invalid Dest (400) -> Dispatch (IN_TRANSIT) -> Busy Conflict (409) -> Completion (COMPLETED) -> Re-Dispatch (201).
+[✓] 9. Platform Health & Diagnostics Observability: PASS: Engine status UP, Uptime: 353s, Memory: 5.3 MB.
+[✓] 10. A* Pathfinding Engine (Deterministic Collision Avoidance): PASS: A* calculated optimal route (16 steps, 35 nodes explored in 1ms). Verified static obstacle avoidance.
+[✓] 11. Autonomous Fleet Mission Lifecycle & State Machine: PASS: Verified end-to-end for MSN-653033-857 (TurtleBot 4 (Alpha)): Creation (READY) -> Invalid Dest (400) -> Dispatch (IN_TRANSIT) -> Busy Conflict (409) -> Completion (COMPLETED) -> Re-Dispatch (201).
 [✓] 12. What-If Research Intelligence Scenario Engine: PASS: Predictive strategy yields 64.4h downtime vs Reactive 828.8h (764.4h saved). ROI Index: 240.2.
 [✓] 13. Multi-Sensor Statistical Anomaly Detection & Model Benchmark: PASS: Sensor telemetry active (4 devices, Z-Score boundary > 2.0). 500-sample benchmark accuracy: 98.4%, Precision: 93.75%, F1: 96.77%.
 [✓] 14. Dynamic Obstacle Avoidance & Invariant Safety Lifecycle: PASS: Dynamic hazard reroute -> Dead-end emergency safety halt (BLOCKED) -> Auto-resume on obstacle clear verified.
+[✓] 15. Mission Completion Invariants & Robot Release: PASS: Verified auto-completion on final waypoint (100% progress), robot release (AVAILABLE/IDLE), idempotent manual complete, and ticker inactivity.
 ====================================================
-VERIFICATION SUMMARY: 14/14 TEST SUITES PASSED
+VERIFICATION SUMMARY: 15/15 TEST SUITES PASSED
 ====================================================
+```
+
+### Deterministic Lifecycle Regression Suite Output (6/6 Passed):
+```text
+========================================================
+🧪 DETERMINISTIC MISSION COMPLETION & LIFECYCLE TESTS
+========================================================
+[✓] Mission created and auto-dispatched: MSN-993633-552
+    Path waypoints count: 5 Path: [[0,1],[0,2],[0,3],[1,3],[2,3]]
+
+--- SUBTEST A: Manual Completion Fallback & Idempotency ---
+First complete call status: 200 Message: Mission marked complete
+Second complete call status: 200 Message: Mission is already completed
+
+--- SUBTEST B: Reject Start & Resume on Completed Mission ---
+Start completed mission status: 400 Message: Cannot start a mission that is already COMPLETED. Use re-dispatch to create a new sortie.
+Resume completed mission status: 400 Message: Cannot resume a mission that is already COMPLETED.
+
+--- SUBTEST C: Automated Completion When Robot Arrives at Final Waypoint ---
+Drone mission created: MSN-993650-570 Path length: 5
+Fast-forwarded mission to penultimate node (Step 3/4)
+Waiting 5.5s for ticker to execute and advance into final node...
+Mission state after ticker arrival:
+  Status: COMPLETED
+  Progress: 100%
+  Current step: 4/4
+  Current coords: [10,3] Target coords: [10,3]
+  CompletedAt: 2026-10-20T16:16:37.451Z
+
+--- SUBTEST D: Verify Robot Released to Available / Idle Standby ---
+Robot status: AVAILABLE Mode: IDLE_STANDBY isBusy: false
+
+--- SUBTEST E: Repeated Ticker Runs Do Not Modify Completed Mission ---
+Waiting another 5.0s to confirm ticker skips completed mission...
+  Elapsed seconds before: 4 after: 4
+  Battery consumed before: 0.3 after: 0.3
+
+--- SUBTEST F: Verify Persistence in robovault-local-db.json ---
+Disk persisted status: COMPLETED completedAt: 2026-10-20T16:16:37.451Z
+
+🎉 ALL DETERMINISTIC MISSION COMPLETION & LIFECYCLE TESTS PASSED (6/6)!
 ```
 
 ### Client DOM & Tab Navigation Render Suite Output (12/12 Passed):

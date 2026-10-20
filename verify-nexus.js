@@ -313,6 +313,92 @@ async function runVerification() {
         await apiPost(`/api/missions/${msn.id}/complete`, {});
         return `PASS: Dynamic hazard reroute -> Dead-end emergency safety halt (BLOCKED) -> Auto-resume on obstacle clear verified.`;
       }
+    },
+    {
+      name: '15. Mission Completion Invariants & Robot Release',
+      run: async () => {
+        // 1. Create auto-dispatched sortie
+        const createRes = await apiPost('/api/missions', {
+          name: 'Completion Invariants Verification Sortie',
+          type: 'PAYLOAD_DELIVERY',
+          robotId: 'dev-tb4-01',
+          targetWorkstationId: 'ws-1',
+          autoDispatch: true
+        });
+        if (createRes.status !== 201) throw new Error('Failed to create mission');
+        const msnId = createRes.data.data.id;
+
+        // 2. Test manual completion fallback and idempotency
+        const comp1 = await apiPost(`/api/missions/${msnId}/complete`, {});
+        if (comp1.status !== 200 || comp1.data.data.status !== 'COMPLETED' || comp1.data.data.progressPct !== 100) {
+          throw new Error('Initial manual completion failed');
+        }
+        const comp2 = await apiPost(`/api/missions/${msnId}/complete`, {});
+        if (comp2.status !== 200 || !comp2.data.message.includes('already completed')) {
+          throw new Error('Idempotent complete call failed: ' + comp2.data.message);
+        }
+
+        // 3. Test start and resume rejection on completed mission
+        const startComp = await apiPost(`/api/missions/${msnId}/start`, {});
+        if (startComp.status !== 400) throw new Error('Expected 400 for start on completed mission, got ' + startComp.status);
+        const resumeComp = await apiPost(`/api/missions/${msnId}/resume`, {});
+        if (resumeComp.status !== 400) throw new Error('Expected 400 for resume on completed mission, got ' + resumeComp.status);
+
+        // 4. Test automated ticker completion upon final node arrival
+        const droneRes = await apiPost('/api/missions', {
+          name: 'Automated Waypoint Arrival Test',
+          type: 'CALIBRATION_PATROL',
+          robotId: 'dev-drone-04',
+          targetWorkstationId: 'ws-3',
+          autoDispatch: true
+        });
+        if (droneRes.status !== 201) throw new Error('Failed to create drone mission');
+        const autoMsn = droneRes.data.data;
+
+        // Fast-forward mission to penultimate waypoint via DB
+        const fs = require('fs');
+        const dbPath = 'C:\\Users\\sabarivasan\\.gemini\\antigravity\\scratch\\RoboVault\\robovault-local-db.json';
+        const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+        const mRecord = dbData.missions.find(m => m.id === autoMsn.id);
+        mRecord.currentStepIndex = mRecord.path.length - 2;
+        mRecord.currentCoords = mRecord.path[mRecord.currentStepIndex];
+        mRecord.status = 'IN_TRANSIT';
+        fs.writeFileSync(dbPath, JSON.stringify(dbData, null, 2));
+
+        // Wait 5.5s for ticker to advance to final waypoint
+        await new Promise(r => setTimeout(r, 5500));
+
+        // Verify status automatically became COMPLETED in ticker
+        const msnList = await apiGet('/api/missions');
+        const finishedMsn = (msnList.data.data || []).find(m => m.id === autoMsn.id);
+        if (finishedMsn.status !== 'COMPLETED') {
+          throw new Error(`Expected COMPLETED on arrival, got ${finishedMsn.status} (step ${finishedMsn.currentStepIndex}/${finishedMsn.pathLength})`);
+        }
+        if (finishedMsn.progressPct !== 100) {
+          throw new Error(`Expected progressPct 100, got ${finishedMsn.progressPct}`);
+        }
+        if (!finishedMsn.completedAt) {
+          throw new Error('completedAt timestamp missing');
+        }
+
+        // 5. Verify robot released to AVAILABLE / IDLE_STANDBY
+        const robot = (msnList.data.allRobots || []).find(r => r.id === 'dev-drone-04');
+        if (robot.isBusy !== false) throw new Error('Expected robot isBusy false after mission completion');
+        if (robot.status !== 'AVAILABLE' && robot.status !== 'CHARGING') {
+          throw new Error('Expected robot to be AVAILABLE or CHARGING, got ' + robot.status);
+        }
+
+        // 6. Verify ticker inactivity on completed mission
+        const elapsedBefore = finishedMsn.elapsedSeconds;
+        await new Promise(r => setTimeout(r, 4500));
+        const afterList = await apiGet('/api/missions');
+        const afterMsn = (afterList.data.data || []).find(m => m.id === autoMsn.id);
+        if (afterMsn.elapsedSeconds !== elapsedBefore) {
+          throw new Error('Completed mission erroneously updated by subsequent ticker runs');
+        }
+
+        return `PASS: Verified auto-completion on final waypoint (100% progress), robot release (AVAILABLE/IDLE), idempotent manual complete, and ticker inactivity.`;
+      }
     }
   ];
 

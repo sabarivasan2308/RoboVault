@@ -119,10 +119,10 @@ function saveDb(data) {
   }
 }
 
-function logActivity(action, entityType, entityId, performedBy, details) {
-  const db = loadDb();
+function logActivity(action, entityType, entityId, performedBy, details, targetDb = null) {
+  const db = targetDb || loadDb();
   const entry = {
-    id: 'act-' + Date.now(),
+    id: 'act-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     action,
     entityType,
     entityId,
@@ -130,15 +130,16 @@ function logActivity(action, entityType, entityId, performedBy, details) {
     details,
     timestamp: new Date().toISOString()
   };
+  if (!db.activityLogs) db.activityLogs = [];
   db.activityLogs.unshift(entry);
   if (db.activityLogs.length > 300) db.activityLogs.pop();
-  saveDb(db);
+  if (!targetDb) saveDb(db);
 }
 
-function createNotification(title, message, severity, entityType, entityId) {
-  const db = loadDb();
+function createNotification(title, message, severity, entityType, entityId, targetDb = null) {
+  const db = targetDb || loadDb();
   const notif = {
-    id: 'notif-' + Date.now(),
+    id: 'notif-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     title,
     message,
     severity: severity || 'MEDIUM',
@@ -150,7 +151,44 @@ function createNotification(title, message, severity, entityType, entityId) {
   if (!db.notifications) db.notifications = [];
   db.notifications.unshift(notif);
   if (db.notifications.length > 50) db.notifications.pop();
-  saveDb(db);
+  if (!targetDb) saveDb(db);
+}
+
+// ---------------- DETERMINISTIC MISSION COMPLETION ENGINE ----------------
+function completeMissionRecord(msn, db, trigger = 'autonomous-simulator') {
+  // Idempotency: prevent duplicate completion transitions and duplicate activity logs
+  if (!msn || msn.status === 'COMPLETED') return false;
+
+  msn.status = 'COMPLETED';
+  msn.progressPct = 100;
+  msn.completedAt = new Date().toISOString();
+  msn.blockedReason = null;
+
+  if (msn.path && msn.path.length > 0) {
+    msn.currentStepIndex = msn.path.length - 1;
+    msn.pathLength = msn.path.length - 1;
+    msn.currentCoords = [...msn.path[msn.path.length - 1]];
+  } else if (msn.targetCoords) {
+    msn.currentCoords = [...msn.targetCoords];
+  }
+
+  // Release assigned robot to AVAILABLE / IDLE_STANDBY
+  const assignedRobot = (db.devices || []).find(d => d.id === msn.robotId);
+  if (assignedRobot) {
+    assignedRobot.status = assignedRobot.battery < 25 ? 'CHARGING' : 'AVAILABLE';
+    assignedRobot.mode = 'IDLE_STANDBY';
+  }
+
+  // Release target workstation
+  if (db.digitalTwin && db.digitalTwin.workstations) {
+    const ws = db.digitalTwin.workstations.find(w => w.id === msn.targetWorkstationId);
+    if (ws) ws.status = 'AVAILABLE';
+  }
+
+  logActivity('MISSION_COMPLETED', 'MISSION', msn.id, trigger, `Mission ${msn.name} reached destination ${msn.targetWorkstationName}`, db);
+  createNotification('Mission Arrived at Target', `Robot ${msn.robotName} arrived at ${msn.targetWorkstationName}.`, 'INFO', 'MISSION', msn.id, db);
+
+  return true;
 }
 
 // ---------------- SIMULATED TELEMETRY GENERATOR ----------------
@@ -169,7 +207,7 @@ setInterval(() => {
       dev.motorRpm = Math.floor(Math.random() * 40 + 100);
       if (dev.battery < 15 && !dev.lowBatAlerted) {
         dev.lowBatAlerted = true;
-        createNotification('Battery Low Alert', `${dev.name} battery is down to ${dev.battery}%. Return to docking bay.`, 'HIGH', 'DEVICE', dev.id);
+        createNotification('Battery Low Alert', `${dev.name} battery is down to ${dev.battery}%. Return to docking bay.`, 'HIGH', 'DEVICE', dev.id, db);
       }
     } else if (dev.status === 'CHARGING') {
       dev.battery = Math.min(100, Number((dev.battery + 0.5).toFixed(1)));
@@ -180,63 +218,62 @@ setInterval(() => {
   // Autonomous Fleet Mission Simulation Progression
   if (db.missions) {
     db.missions.forEach(msn => {
-      if (msn.status === 'IN_TRANSIT') {
-        msn.elapsedSeconds = (msn.elapsedSeconds || 0) + 4;
-        if (msn.currentStepIndex < msn.path.length - 1) {
-          const nextCoord = msn.path[msn.currentStepIndex + 1];
-          const allObs = [...STATIC_OBSTACLES, ...activeDynamicObstacles];
-          const isNextBlocked = allObs.some(o => o[0] === nextCoord[0] && o[1] === nextCoord[1]);
+      // Requirement 4: Stop ticker updates for completed or non-transit missions
+      if (msn.status !== 'IN_TRANSIT') return;
 
-          if (isNextBlocked) {
-            // Dynamic collision avoidance: Attempt A* replanning from current waypoint
-            const replan = findAStarPath(msn.currentCoords, msn.targetCoords, activeDynamicObstacles);
-            if (replan.success && replan.path.length > 1) {
-              const traveled = msn.path.slice(0, msn.currentStepIndex + 1);
-              msn.path = [...traveled, ...replan.path.slice(1)];
-              msn.pathLength = msn.path.length - 1;
-              msn.progressPct = Math.min(99, Math.round((msn.currentStepIndex / (msn.path.length - 1)) * 100));
-              logActivity('MISSION_REROUTED', 'MISSION', msn.id, 'autonomous-simulator', `Obstacle detected ahead at (${nextCoord[0]},${nextCoord[1]}). Trajectory dynamically re-routed (${replan.pathLength} nodes).`);
-              createNotification('Trajectory Re-routed', `${msn.name} dynamically re-routed around obstacle at (${nextCoord[0]},${nextCoord[1]}).`, 'INFO', 'SIMULATOR', msn.id);
-            } else {
-              // Safety Invariant: Target obstructed -> Safe Emergency Halt (Robot stops, zero collision)
-              msn.status = 'BLOCKED';
-              msn.blockedReason = `Obstacle ahead at (${nextCoord[0]}, ${nextCoord[1]}). Destination is completely obstructed. Safe halt engaged.`;
-              const assignedRobot = db.devices.find(d => d.id === msn.robotId);
-              if (assignedRobot) {
-                assignedRobot.status = 'ERROR';
-                assignedRobot.mode = 'SAFETY_HALT';
-              }
-              logActivity('SAFETY_HALT', 'MISSION', msn.id, 'autonomous-simulator', msn.blockedReason);
-              createNotification('Collision Prevention Halt', `Robot ${msn.robotName} halted safely: route blocked at (${nextCoord[0]},${nextCoord[1]}).`, 'HIGH', 'SIMULATOR', msn.id);
-              return; // Do NOT advance into obstacle
-            }
-          }
+      // Requirement 2: If mission is already at or beyond destination, complete immediately
+      if (!msn.path || msn.path.length <= 1 || msn.currentStepIndex >= msn.path.length - 1) {
+        completeMissionRecord(msn, db, 'autonomous-simulator');
+        return;
+      }
 
-          msn.currentStepIndex++;
-          msn.currentCoords = msn.path[msn.currentStepIndex];
+      msn.elapsedSeconds = (msn.elapsedSeconds || 0) + 4;
+      const nextCoord = msn.path[msn.currentStepIndex + 1];
+      const allObs = [...STATIC_OBSTACLES, ...activeDynamicObstacles];
+      const isNextBlocked = allObs.some(o => o[0] === nextCoord[0] && o[1] === nextCoord[1]);
+
+      if (isNextBlocked) {
+        // Dynamic collision avoidance: Attempt A* replanning from current waypoint
+        const replan = findAStarPath(msn.currentCoords, msn.targetCoords, activeDynamicObstacles);
+        if (replan.success && replan.path.length > 1) {
+          const traveled = msn.path.slice(0, msn.currentStepIndex + 1);
+          msn.path = [...traveled, ...replan.path.slice(1)];
+          msn.pathLength = msn.path.length - 1;
           msn.progressPct = Math.min(99, Math.round((msn.currentStepIndex / (msn.path.length - 1)) * 100));
-          msn.batteryConsumed = Number(((msn.batteryConsumed || 0) + 0.3).toFixed(1));
-
-          const assignedRobot = db.devices.find(d => d.id === msn.robotId);
-          if (assignedRobot) {
-            assignedRobot.status = 'IN_TRANSIT';
-            assignedRobot.battery = Math.max(5, Number((assignedRobot.battery - 0.3).toFixed(1)));
-          }
+          logActivity('MISSION_REROUTED', 'MISSION', msn.id, 'autonomous-simulator', `Obstacle detected ahead at (${nextCoord[0]},${nextCoord[1]}). Trajectory dynamically re-routed (${replan.pathLength} nodes).`, db);
+          createNotification('Trajectory Re-routed', `${msn.name} dynamically re-routed around obstacle at (${nextCoord[0]},${nextCoord[1]}).`, 'INFO', 'SIMULATOR', msn.id, db);
         } else {
-          msn.status = 'COMPLETED';
-          msn.progressPct = 100;
-          msn.completedAt = new Date().toISOString();
+          // Safety Invariant: Target obstructed -> Safe Emergency Halt (Robot stops, zero collision)
+          msn.status = 'BLOCKED';
+          msn.blockedReason = `Obstacle ahead at (${nextCoord[0]}, ${nextCoord[1]}). Destination is completely obstructed. Safe halt engaged.`;
           const assignedRobot = db.devices.find(d => d.id === msn.robotId);
           if (assignedRobot) {
-            assignedRobot.status = assignedRobot.battery < 25 ? 'CHARGING' : 'AVAILABLE';
-            assignedRobot.mode = 'IDLE_STANDBY';
+            assignedRobot.status = 'ERROR';
+            assignedRobot.mode = 'SAFETY_HALT';
           }
-          if (db.digitalTwin && db.digitalTwin.workstations) {
-            const ws = db.digitalTwin.workstations.find(w => w.id === msn.targetWorkstationId);
-            if (ws) ws.status = 'AVAILABLE';
-          }
-          logActivity('MISSION_COMPLETED', 'MISSION', msn.id, 'autonomous-simulator', `Mission ${msn.name} reached destination ${msn.targetWorkstationName}`);
-          createNotification('Mission Arrived at Target', `Robot ${msn.robotName} arrived at ${msn.targetWorkstationName}.`, 'INFO', 'MISSION', msn.id);
+          logActivity('SAFETY_HALT', 'MISSION', msn.id, 'autonomous-simulator', msn.blockedReason, db);
+          createNotification('Collision Prevention Halt', `Robot ${msn.robotName} halted safely: route blocked at (${nextCoord[0]},${nextCoord[1]}).`, 'HIGH', 'SIMULATOR', msn.id, db);
+          return; // Do NOT advance into obstacle
+        }
+      }
+
+      msn.currentStepIndex++;
+      msn.currentCoords = msn.path[msn.currentStepIndex];
+      msn.batteryConsumed = Number(((msn.batteryConsumed || 0) + 0.3).toFixed(1));
+
+      const assignedRobot = db.devices.find(d => d.id === msn.robotId);
+      if (assignedRobot) {
+        assignedRobot.battery = Math.max(5, Number((assignedRobot.battery - 0.3).toFixed(1)));
+      }
+
+      // Requirement 2 & 3: Check if robot has reached final destination waypoint
+      if (msn.currentStepIndex >= msn.path.length - 1) {
+        completeMissionRecord(msn, db, 'autonomous-simulator');
+      } else {
+        msn.progressPct = Math.min(99, Math.round((msn.currentStepIndex / (msn.path.length - 1)) * 100));
+        if (assignedRobot) {
+          assignedRobot.status = 'IN_TRANSIT';
+          assignedRobot.mode = 'AUTONOMOUS_TRAVERSAL';
         }
       }
     });
@@ -1389,8 +1426,19 @@ const server = http.createServer(async (req, res) => {
     
     // 17. Autonomous Fleet Missions
     if (pathname === '/api/missions' && method === 'GET') {
-      const activeMission = (db.missions || []).find(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED');
-      const busyRobotIds = new Set((db.missions || []).filter(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED').map(m => m.robotId));
+      let stateChanged = false;
+      if (db.missions) {
+        db.missions.forEach(m => {
+          if (m.status === 'IN_TRANSIT' && m.path && m.currentStepIndex >= m.path.length - 1) {
+            completeMissionRecord(m, db, 'autonomous-simulator');
+            stateChanged = true;
+          }
+        });
+      }
+      if (stateChanged) saveDb(db);
+
+      const activeMission = (db.missions || []).find(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED' || m.status === 'BLOCKED');
+      const busyRobotIds = new Set((db.missions || []).filter(m => m.status === 'IN_TRANSIT' || m.status === 'READY' || m.status === 'PAUSED' || m.status === 'BLOCKED').map(m => m.robotId));
       return sendJson(res, 200, {
         success: true,
         data: db.missions || [],
@@ -1491,8 +1539,12 @@ const server = http.createServer(async (req, res) => {
       };
 
       if (isAutoDispatch) {
-        robot.status = 'IN_TRANSIT';
-        robot.mode = 'AUTONOMOUS_TRAVERSAL';
+        if (!mission.path || mission.path.length <= 1) {
+          completeMissionRecord(mission, db, 'autonomous-simulator');
+        } else {
+          robot.status = 'IN_TRANSIT';
+          robot.mode = 'AUTONOMOUS_TRAVERSAL';
+        }
       }
 
       if (!db.missions) db.missions = [];
@@ -1560,6 +1612,24 @@ const server = http.createServer(async (req, res) => {
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
       
+      if (mission.status === 'COMPLETED') {
+        return sendJson(res, 400, {
+          success: false,
+          message: 'Cannot start a mission that is already COMPLETED. Use re-dispatch to create a new sortie.'
+        });
+      }
+
+      // If mission has already reached destination, complete it immediately
+      if (mission.currentStepIndex >= (mission.path ? mission.path.length - 1 : 0)) {
+        completeMissionRecord(mission, db, 'admin');
+        saveDb(db);
+        return sendJson(res, 200, {
+          success: true,
+          message: 'Mission has already reached its destination and has been marked COMPLETED.',
+          data: mission
+        });
+      }
+
       const checkPath = findAStarPath(mission.currentCoords || mission.startCoords, mission.targetCoords, activeDynamicObstacles);
       if (!checkPath.success) {
         return sendJson(res, 409, {
@@ -1593,6 +1663,9 @@ const server = http.createServer(async (req, res) => {
       const id = pathname.split('/')[3];
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
+      if (mission.status === 'COMPLETED') {
+        return sendJson(res, 400, { success: false, message: 'Cannot pause a mission that is already COMPLETED.' });
+      }
       mission.status = 'PAUSED';
       saveDb(db);
       return sendJson(res, 200, { success: true, message: 'Mission paused', data: mission });
@@ -1602,6 +1675,24 @@ const server = http.createServer(async (req, res) => {
       const id = pathname.split('/')[3];
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
+
+      if (mission.status === 'COMPLETED') {
+        return sendJson(res, 400, {
+          success: false,
+          message: 'Cannot resume a mission that is already COMPLETED.'
+        });
+      }
+
+      // If mission has already reached destination, complete it immediately
+      if (mission.currentStepIndex >= (mission.path ? mission.path.length - 1 : 0)) {
+        completeMissionRecord(mission, db, 'admin');
+        saveDb(db);
+        return sendJson(res, 200, {
+          success: true,
+          message: 'Mission has already reached its destination and has been marked COMPLETED.',
+          data: mission
+        });
+      }
 
       const checkPath = findAStarPath(mission.currentCoords, mission.targetCoords, activeDynamicObstacles);
       if (!checkPath.success) {
@@ -1632,6 +1723,9 @@ const server = http.createServer(async (req, res) => {
       const id = pathname.split('/')[3];
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
+      if (mission.status === 'COMPLETED') {
+        return sendJson(res, 400, { success: false, message: 'Cannot abort a mission that is already COMPLETED.' });
+      }
       mission.status = 'ABORTED';
       const dev = db.devices.find(d => d.id === mission.robotId);
       if (dev) {
@@ -1651,22 +1745,14 @@ const server = http.createServer(async (req, res) => {
       const id = pathname.split('/')[3];
       const mission = (db.missions || []).find(m => m.id === id);
       if (!mission) return sendJson(res, 404, { success: false, message: 'Mission not found' });
-      mission.status = 'COMPLETED';
-      mission.progressPct = 100;
-      mission.completedAt = new Date().toISOString();
-      mission.currentStepIndex = mission.path.length - 1;
-      mission.currentCoords = mission.path[mission.currentStepIndex];
-      const dev = db.devices.find(d => d.id === mission.robotId);
-      if (dev) {
-        dev.status = dev.battery < 25 ? 'CHARGING' : 'AVAILABLE';
-        dev.mode = 'IDLE_STANDBY';
+
+      // Idempotency: if already completed, do not trigger duplicate events
+      if (mission.status === 'COMPLETED') {
+        return sendJson(res, 200, { success: true, message: 'Mission is already completed', data: mission });
       }
-      if (db.digitalTwin && db.digitalTwin.workstations) {
-        const ws = db.digitalTwin.workstations.find(w => w.id === mission.targetWorkstationId);
-        if (ws) ws.status = 'AVAILABLE';
-      }
+
+      completeMissionRecord(mission, db, 'admin');
       saveDb(db);
-      logActivity('MISSION_COMPLETED', 'MISSION', mission.id, 'admin', `Mission ${mission.name} manually completed`);
       return sendJson(res, 200, { success: true, message: 'Mission marked complete', data: mission });
     }
 
@@ -1773,8 +1859,13 @@ const server = http.createServer(async (req, res) => {
           const traveledSoFar = activeMission.path.slice(0, curIdx + 1);
           activeMission.path = [...traveledSoFar, ...newPathRes.path.slice(1)];
           activeMission.pathLength = activeMission.path.length - 1;
-          activeMission.progressPct = Math.round((curIdx / (activeMission.path.length - 1)) * 100);
-          rerouteMsg = `Hazard placed at (${cx}, ${cy}). Dynamic A* path recalculated with ${newPathRes.pathLength} remaining steps.`;
+          if (curIdx >= activeMission.path.length - 1) {
+            completeMissionRecord(activeMission, db, 'autonomous-simulator');
+            rerouteMsg = `Hazard placed at (${cx}, ${cy}). Robot has reached destination and mission completed.`;
+          } else {
+            activeMission.progressPct = Math.min(99, Math.round((curIdx / (activeMission.path.length - 1)) * 100));
+            rerouteMsg = `Hazard placed at (${cx}, ${cy}). Dynamic A* path recalculated with ${newPathRes.pathLength} remaining steps.`;
+          }
         } else {
           // Strict Safety Halt: target unreachable, freeze robot before obstacle
           activeMission.status = 'BLOCKED';
