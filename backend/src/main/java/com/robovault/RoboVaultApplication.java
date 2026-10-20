@@ -12,4 +12,3 @@ public class RoboVaultApplication {
         SpringApplication.run(RoboVaultApplication.class, args);
     }
 }
-
