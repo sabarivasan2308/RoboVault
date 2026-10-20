@@ -185,3 +185,4 @@ public class AssetService {
         assetRepository.save(asset);
     }
 }
+

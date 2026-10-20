@@ -159,3 +159,4 @@ flowchart LR
    - `@PreAuthorize("hasAnyRole('ADMIN', 'LAB_ASSISTANT')")` permits inventory auditing and repair lifecycle operations.
 4. **Immutable Audit Trails**:
    - Every mutation produces an asynchronous or transactional `ActivityLog` entry recording operator identity, target entity ID, action token, and payload metadata.
+

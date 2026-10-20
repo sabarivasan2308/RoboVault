@@ -236,3 +236,4 @@ To prevent race conditions during concurrent checkouts or allocations:
 3. **Safe Return Restoration**:
    - Returned equipment in `GOOD` or `FAIR` condition immediately restores `availableQuantity += returnedQty`.
    - Equipment returned in `DAMAGED` or `POOR` condition updates asset status to `DAMAGED` or `MAINTENANCE`, preventing uninspected reassignment.
+

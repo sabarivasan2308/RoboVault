@@ -6,3 +6,4 @@ public enum PhysicalCondition {
     POOR,
     DAMAGED
 }
+

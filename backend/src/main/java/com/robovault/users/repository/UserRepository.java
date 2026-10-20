@@ -18,3 +18,4 @@ public interface UserRepository extends MongoRepository<User, String> {
     long countByRole(UserRole role);
     long countByRoleAndActiveTrue(UserRole role);
 }
+

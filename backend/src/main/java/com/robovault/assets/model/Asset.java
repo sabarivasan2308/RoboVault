@@ -250,3 +250,4 @@ public class Asset {
         this.updatedBy = updatedBy;
     }
 }
+

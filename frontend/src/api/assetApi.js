@@ -38,3 +38,4 @@ export const assetApi = {
     return res.data?.data || [];
   }
 };
+

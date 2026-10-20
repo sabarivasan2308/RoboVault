@@ -24,3 +24,4 @@ public enum AssetCategory {
         return displayName;
     }
 }
+

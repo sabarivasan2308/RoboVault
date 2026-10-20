@@ -13,3 +13,4 @@ public interface ActivityLogRepository extends MongoRepository<ActivityLog, Stri
     List<ActivityLog> findTop20ByOrderByTimestampDesc();
     Page<ActivityLog> findByEntityType(String entityType, Pageable pageable);
 }
+

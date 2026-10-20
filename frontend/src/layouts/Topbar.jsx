@@ -22,3 +22,4 @@ export const Topbar = ({ title = "RoboVault", subtitle = "Laboratory Management 
 };
 
 export default Topbar;
+

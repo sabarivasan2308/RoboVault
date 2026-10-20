@@ -147,3 +147,4 @@ docker compose exec mongodb mongodump --db robovault --out /data/db/backup_$(dat
 ```bash
 docker compose exec mongodb mongorestore --db robovault /data/db/backup_2026-10-20/robovault
 ```
+

@@ -117,3 +117,4 @@ public class ActivityLog {
         this.timestamp = timestamp;
     }
 }
+

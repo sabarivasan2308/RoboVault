@@ -29,3 +29,4 @@ export const Pagination = ({ currentPage = 0, totalPages = 1, onPageChange }) =>
 };
 
 export default Pagination;
+

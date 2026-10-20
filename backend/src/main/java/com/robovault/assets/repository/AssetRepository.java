@@ -49,3 +49,4 @@ public interface AssetRepository extends MongoRepository<Asset, String> {
            "] }")
     Page<Asset> searchByGeneralQueryPaged(String query, Pageable pageable);
 }
+

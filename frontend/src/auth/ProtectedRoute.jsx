@@ -33,3 +33,4 @@ export const RoleGuard = ({ allowedRoles = [], children }) => {
 
   return children;
 };
+

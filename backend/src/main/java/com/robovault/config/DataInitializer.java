@@ -280,3 +280,4 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("✓ RoboVault institutional development catalog successfully initialized!");
     }
 }
+

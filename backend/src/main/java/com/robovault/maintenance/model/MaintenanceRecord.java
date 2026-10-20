@@ -203,3 +203,4 @@ public class MaintenanceRecord {
         this.updatedAt = updatedAt;
     }
 }
+

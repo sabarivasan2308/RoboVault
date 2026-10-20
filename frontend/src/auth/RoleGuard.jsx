@@ -23,3 +23,4 @@ export default function RoleGuard({ children, allowedRoles = [] }) {
 
   return children;
 }
+

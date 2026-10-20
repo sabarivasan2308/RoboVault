@@ -27,3 +27,4 @@ public class ActivityLogController {
         return ResponseEntity.ok(ApiResponse.success(service.getLogsPaginated(page, size, entityType)));
     }
 }
+

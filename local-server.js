@@ -1,0 +1,2191 @@
+/**
+ * ROBO VAULT NEXUS — Robotics Operations Intelligence & Digital Twin Platform
+ * Enterprise Localhost Server & Real-time REST API
+ * Supports: Mission Control, Digital Twin Studio, Live Fleet Telemetry (Simulated Provider),
+ * Explainable Predictive Maintenance, Smart Asset QR Identifiers, Intelligent Resource Scheduling,
+ * Maintenance Workbench with SLAs, Operational Notifications, Global Command Palette (Ctrl+K),
+ * CSV Reporting, and System Health Observability.
+ */
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const url = require('url');
+
+const PORT = 3000;
+const DB_PATH = path.join(__dirname, 'robovault-local-db.json');
+const SERVER_START_TIME = Date.now();
+
+// ---------------- DEFAULT DATABASE & DOMAIN MODELS ----------------
+const DEFAULT_DB = {
+  users: [
+    { id: 'usr-1', username: 'admin', email: 'admin@robovault.io', password: 'Admin123!', fullName: 'Dr. Sarah Vance', role: 'ADMIN', department: 'Robotics Engineering', active: true, createdAt: '2026-10-01T08:00:00Z' },
+    { id: 'usr-2', username: 'assistant', email: 'assistant@robovault.io', password: 'Assistant123!', fullName: 'Alex Rivera', role: 'LAB_ASSISTANT', department: 'Robotics Lab Operations', active: true, createdAt: '2026-10-05T09:30:00Z' },
+    { id: 'usr-3', username: 'faculty', email: 'faculty@robovault.io', password: 'Faculty123!', fullName: 'Prof. David Chen', role: 'FACULTY', department: 'Autonomous Systems Research', active: true, createdAt: '2026-10-08T11:00:00Z' },
+    { id: 'usr-4', username: 'student', email: 'student@robovault.io', password: 'Student123!', fullName: 'Maya Patel', role: 'STUDENT', department: 'Robotics & Mechatronics', active: true, createdAt: '2026-10-12T14:15:00Z' }
+  ],
+  assets: [
+    { id: 'ast-1', assetId: 'RB-STM32-001', name: 'STM32F4 Discovery Board', category: 'MICROCONTROLLER', brand: 'STMicroelectronics', model: 'STM32F407G-DISC1', serialNumber: 'STM-2024-8841', quantity: 12, availableQuantity: 9, location: 'Rack A1 - Bin 04', status: 'AVAILABLE', condition: 'GOOD', purchaseDate: '2024-01-15', warrantyExpiry: '2027-01-15', acquisitionCost: 28.50, runtimeHours: 420, description: 'ARM Cortex-M4 discovery kit with ST-LINK debugger.', createdAt: '2026-10-01T10:00:00Z' },
+    { id: 'ast-2', assetId: 'RB-ESP32-014', name: 'ESP32 NodeMCU Wi-Fi/BT Module', category: 'DEVELOPMENT_BOARDS', brand: 'Espressif', model: 'ESP32-WROOM-32D', serialNumber: 'ESP-2024-0412', quantity: 25, availableQuantity: 21, location: 'Rack B2 - Shelf 1', status: 'AVAILABLE', condition: 'GOOD', purchaseDate: '2024-02-10', warrantyExpiry: '2026-12-31', acquisitionCost: 8.20, runtimeHours: 850, description: 'Dual-core MCU with Wi-Fi & Bluetooth telemetry.', createdAt: '2026-10-01T10:30:00Z' },
+    { id: 'ast-3', assetId: 'RB-LIDAR-003', name: 'RPLIDAR A1 360° Laser Scanner', category: 'SENSORS', brand: 'Slamtec', model: 'A1M8', serialNumber: 'RPL-2023-7721', quantity: 5, availableQuantity: 3, location: 'Cabinet C - Shelf 2', status: 'AVAILABLE', condition: 'GOOD', purchaseDate: '2023-11-20', warrantyExpiry: '2025-11-20', acquisitionCost: 99.00, runtimeHours: 1120, description: '360 degree 12-meter laser distance measurement scanner.', createdAt: '2026-10-02T11:00:00Z' },
+    { id: 'ast-4', assetId: 'RB-ROBOT-001', name: 'TurtleBot 4 Mobile Base', category: 'ROBOTS', brand: 'Clearpath Robotics', model: 'TB4-STANDARD', serialNumber: 'TB4-2024-0019', quantity: 2, availableQuantity: 1, location: 'Ground Bay 1', status: 'IN_USE', condition: 'GOOD', purchaseDate: '2024-03-01', warrantyExpiry: '2027-03-01', acquisitionCost: 1850.00, runtimeHours: 640, description: 'Autonomous ROS 2 mobile manipulation research robot.', createdAt: '2026-10-02T11:30:00Z' },
+    { id: 'ast-5', assetId: 'RB-MOTOR-027', name: 'Dynamixel MX-64AT Smart Actuator', category: 'MOTORS', brand: 'ROBOTIS', model: 'MX-64AT', serialNumber: 'DYN-2023-9932', quantity: 8, availableQuantity: 6, location: 'Rack D3 - Bin 12', status: 'AVAILABLE', condition: 'GOOD', purchaseDate: '2023-08-14', warrantyExpiry: '2025-08-14', acquisitionCost: 245.00, runtimeHours: 980, description: 'High-torque RS485 networkable servo with PID feedback.', createdAt: '2026-10-03T14:00:00Z' },
+    { id: 'ast-6', assetId: 'RB-DRIVER-008', name: 'L298N Dual H-Bridge Motor Driver', category: 'MOTOR_DRIVERS', brand: 'Generic', model: 'L298N-RED', serialNumber: 'L29-2024-1102', quantity: 30, availableQuantity: 28, location: 'Rack D2 - Tray 01', status: 'AVAILABLE', condition: 'GOOD', purchaseDate: '2024-01-05', warrantyExpiry: '2025-01-05', acquisitionCost: 4.50, runtimeHours: 320, description: 'Dual stepper and DC motor driver module up to 2A.', createdAt: '2026-10-04T09:00:00Z' },
+    { id: 'ast-7', assetId: 'RB-3DPR-002', name: 'Prusa MK4 3D Printer', category: 'PRINTERS_3D', brand: 'Prusa Research', model: 'MK4-ORIGINAL', serialNumber: 'PRU-2024-5511', quantity: 3, availableQuantity: 2, location: 'Fabrication Corner', status: 'MAINTENANCE', condition: 'FAIR', purchaseDate: '2023-12-10', warrantyExpiry: '2025-12-10', acquisitionCost: 899.00, runtimeHours: 1450, description: 'High-precision FDM 3D printer with Nextruder.', createdAt: '2026-10-05T15:00:00Z' },
+    { id: 'ast-8', assetId: 'RB-TEST-004', name: 'Rigol DS1054Z Digital Oscilloscope', category: 'TEST_EQUIPMENT', brand: 'Rigol', model: 'DS1054Z', serialNumber: 'RIG-2023-3329', quantity: 4, availableQuantity: 3, location: 'Bench Station 4', status: 'AVAILABLE', condition: 'GOOD', purchaseDate: '2023-05-18', warrantyExpiry: '2026-05-18', acquisitionCost: 395.00, runtimeHours: 540, description: '50 MHz 4-channel digital storage oscilloscope.', createdAt: '2026-10-06T10:00:00Z' }
+  ],
+  checkouts: [
+    { id: 'chk-1', requestId: 'REQ-20261020-001', requesterUsername: 'student', requesterFullName: 'Maya Patel', assetId: 'RB-STM32-001', assetName: 'STM32F4 Discovery Board', quantity: 1, projectName: 'Autonomous Swarm Rovers', requestDate: '2026-10-18T10:00:00Z', dueDate: '2026-10-28T17:00:00Z', status: 'ISSUED', approverUsername: 'admin', approvedAt: '2026-10-18T11:00:00Z', issuedAt: '2026-10-18T11:30:00Z', returnedAt: null, issueCondition: 'GOOD', returnCondition: null, notes: 'Required for embedded RTOS telemetry lab.' },
+    { id: 'chk-2', requestId: 'REQ-20261020-002', requesterUsername: 'student', requesterFullName: 'Maya Patel', assetId: 'RB-ROBOT-001', assetName: 'TurtleBot 4 Mobile Base', quantity: 1, projectName: 'Autonomous Swarm Rovers', requestDate: '2026-10-19T09:00:00Z', dueDate: '2026-10-25T17:00:00Z', status: 'ISSUED', approverUsername: 'admin', approvedAt: '2026-10-19T10:00:00Z', issuedAt: '2026-10-19T10:30:00Z', returnedAt: null, issueCondition: 'GOOD', returnCondition: null, notes: 'Mapping algorithms validation.' },
+    { id: 'chk-3', requestId: 'REQ-20261020-003', requesterUsername: 'faculty', requesterFullName: 'Prof. David Chen', assetId: 'RB-LIDAR-003', assetName: 'RPLIDAR A1 360° Laser Scanner', quantity: 1, projectName: 'Indoor Drone Navigation', requestDate: '2026-10-20T08:00:00Z', dueDate: '2026-10-30T17:00:00Z', status: 'PENDING', approverUsername: null, approvedAt: null, issuedAt: null, returnedAt: null, issueCondition: null, returnCondition: null, notes: 'Autonomous flight test bench.' }
+  ],
+  maintenance: [
+    { id: 'mnt-1', assetId: 'RB-3DPR-002', assetName: 'Prusa MK4 3D Printer', status: 'IN_PROGRESS', priority: 'HIGH', rootCause: 'THERMAL_STRESS', assignedTechnician: 'Alex Rivera', issueDescription: 'Hotend thermistor reading erratic temperature fluctuations.', diagnosisFindings: 'Loose wire connector on cartridge thermistor board.', actionsTaken: 'Replaced thermistor cartridge and recalibrated PID loops.', partsReplaced: ['E3D Thermistor Cartridge'], cost: 18.50, slaHours: 24, downtimeHours: 14, checklist: [{ item: 'Visual wiring inspection', done: true }, { item: 'Thermal resistance test', done: true }, { item: 'PID calibration test print', done: false }], startDate: '2026-10-19T14:00:00Z', completionDate: null, openedBy: 'admin' }
+  ],
+  projects: [
+    { id: 'prj-1', code: 'PRJ-SWARM-2026', name: 'Autonomous Swarm Rovers', description: 'Multi-agent decentralized navigation and obstacle avoidance in unstructured environments.', leadFaculty: 'Prof. David Chen', leadStudent: 'Maya Patel', department: 'Autonomous Systems Research', status: 'ACTIVE', startDate: '2026-09-01', targetCompletionDate: '2027-05-30', allocations: [{ id: 'alc-1', assetId: 'RB-ESP32-014', assetName: 'ESP32 NodeMCU Module', quantity: 4, allocatedAt: '2026-09-15T10:00:00Z', allocatedBy: 'admin' }] },
+    { id: 'prj-2', code: 'PRJ-ARM-ROBO', name: '6-DOF Prosthetic Arm', description: 'EMG sensor-driven robotic bionic arm with compliance force feedback.', leadFaculty: 'Dr. Sarah Vance', leadStudent: 'Maya Patel', department: 'Robotics Engineering', status: 'ACTIVE', startDate: '2026-10-01', targetCompletionDate: '2027-04-15', allocations: [{ id: 'alc-2', assetId: 'RB-MOTOR-027', assetName: 'Dynamixel MX-64AT Smart Actuator', quantity: 2, allocatedAt: '2026-10-10T11:00:00Z', allocatedBy: 'admin' }] }
+  ],
+  faults: [
+    { id: 'flt-1', assetId: 'RB-3DPR-002', assetName: 'Prusa MK4 3D Printer', title: 'Thermistor Temp Sensor Glitch', description: 'Thermal runaway error during PLA preheating cycle.', symptoms: 'Display throws Mintemp error after 40 seconds.', severity: 'HIGH', status: 'IN_REPAIR', reportedBy: 'student', reportedAt: '2026-10-19T13:30:00Z', assignedTechnician: 'Alex Rivera', resolution: null },
+    { id: 'flt-2', assetId: 'RB-DRIVER-008', assetName: 'L298N Motor Driver', title: 'Channel B Overheat', description: 'Channel B heatsink gets hot even with no motor attached.', symptoms: 'Pungent burning odor when powered at 12V.', severity: 'CRITICAL', status: 'REPORTED', reportedBy: 'Maya Patel', reportedAt: '2026-10-20T08:15:00Z', assignedTechnician: null, resolution: null }
+  ],
+  reservations: [
+    { id: 'res-1', assetId: 'RB-ROBOT-001', assetName: 'TurtleBot 4 Mobile Base', reservedBy: 'Prof. David Chen', projectName: 'Indoor Drone Navigation', startDate: '2026-11-01', endDate: '2026-11-08', status: 'CONFIRMED', notes: 'Scheduled lidar integration experiment' },
+    { id: 'res-2', assetId: 'RB-TEST-004', assetName: 'Rigol DS1054Z Digital Oscilloscope', reservedBy: 'Maya Patel', projectName: '6-DOF Prosthetic Arm', startDate: '2026-10-25', endDate: '2026-10-27', status: 'CONFIRMED', notes: 'Signal conditioning for myoelectric leads' }
+  ],
+  devices: [
+    { id: 'dev-tb4-01', name: 'TurtleBot 4 (Alpha)', assetId: 'RB-ROBOT-001', type: 'MOBILE_ROBOT', status: 'RUNNING', battery: 84, temperature: 41.2, motorRpm: 125, runtimeHours: 642.5, connectionStatus: 'ONLINE', ipAddress: '192.168.10.101', mode: 'AUTONOMOUS_NAV', lastPing: new Date().toISOString() },
+    { id: 'dev-arm-02', name: 'Bionic Arm Workstation', assetId: 'RB-MOTOR-027', type: 'ARM_MANIPULATOR', status: 'RUNNING', battery: 96, temperature: 38.6, motorRpm: 45, runtimeHours: 981.0, connectionStatus: 'ONLINE', ipAddress: '192.168.10.104', mode: 'TRAJECTORY_FOLLOWING', lastPing: new Date().toISOString() },
+    { id: 'dev-prusa-03', name: 'Prusa MK4 Fabrication Cell', assetId: 'RB-3DPR-002', type: 'PRINTERS_3D', status: 'WARNING', battery: 100, temperature: 68.4, motorRpm: 0, runtimeHours: 1452.1, connectionStatus: 'ONLINE', ipAddress: '192.168.10.112', mode: 'THERMAL_DIAGNOSTIC', lastPing: new Date().toISOString() },
+    { id: 'dev-drone-04', name: 'Crazyflie Swarm Drone A1', assetId: 'RB-ESP32-014', type: 'UAV_DRONE', status: 'CHARGING', battery: 32, temperature: 29.1, motorRpm: 0, runtimeHours: 214.3, connectionStatus: 'ONLINE', ipAddress: '192.168.10.120', mode: 'DOCK_RECHARGE', lastPing: new Date().toISOString() }
+  ],
+  notifications: [
+    { id: 'notif-1', title: 'Critical Fault Detected', message: 'Channel B Overheat reported on L298N Motor Driver (RB-DRIVER-008).', severity: 'CRITICAL', entityType: 'FAULT', entityId: 'flt-2', read: false, timestamp: '2026-10-20T08:16:00Z' },
+    { id: 'notif-2', title: 'Pending Equipment Request', message: 'Prof. David Chen requested RPLIDAR A1 360° Scanner.', severity: 'MEDIUM', entityType: 'CHECKOUT', entityId: 'chk-3', read: false, timestamp: '2026-10-20T08:02:00Z' },
+    { id: 'notif-3', title: 'Predictive Service Recommendation', message: 'Prusa MK4 exceeds 1,400 runtime hrs. Nextruder inspection advised.', severity: 'HIGH', entityType: 'MAINTENANCE', entityId: 'ast-7', read: true, timestamp: '2026-10-19T14:10:00Z' }
+  ],
+  digitalTwin: {
+    zones: [
+      { id: 'zone-1', name: 'Ground Autonomous Robotics Arena', x: 20, y: 20, width: 440, height: 260, color: '#06b6d4' },
+      { id: 'zone-2', name: 'Drone Aerial Flight Cage', x: 480, y: 20, width: 440, height: 260, color: '#3b82f6' },
+      { id: 'zone-3', name: 'Embedded & Microcontroller Benches', x: 20, y: 300, width: 440, height: 260, color: '#10b981' },
+      { id: 'zone-4', name: 'Additive Manufacturing & Rapid Prototyping', x: 480, y: 300, width: 440, height: 260, color: '#f59e0b' }
+    ],
+    workstations: [
+      { id: 'ws-1', label: 'Rover Bay 1', x: 60, y: 70, width: 140, height: 90, assetId: 'RB-ROBOT-001', assetName: 'TurtleBot 4 Mobile Base', status: 'IN_USE', operator: 'Maya Patel' },
+      { id: 'ws-2', label: 'LIDAR Test Bench', x: 250, y: 70, width: 140, height: 90, assetId: 'RB-LIDAR-003', assetName: 'RPLIDAR A1 360° Scanner', status: 'AVAILABLE', operator: 'None' },
+      { id: 'ws-3', label: 'Drone Helipad Alpha', x: 520, y: 70, width: 140, height: 90, assetId: 'RB-ESP32-014', assetName: 'Swarm Telemetry Node', status: 'CHARGING', operator: 'Autonomous System' },
+      { id: 'ws-4', label: 'Bionic Arm Jig', x: 710, y: 70, width: 140, height: 90, assetId: 'RB-MOTOR-027', assetName: 'Dynamixel MX-64AT Actuator', status: 'IN_USE', operator: 'Dr. Sarah Vance' },
+      { id: 'ws-5', label: 'STM32 Station A', x: 60, y: 350, width: 140, height: 90, assetId: 'RB-STM32-001', assetName: 'STM32F4 Discovery Board', status: 'AVAILABLE', operator: 'None' },
+      { id: 'ws-6', label: 'Oscilloscope Station', x: 250, y: 350, width: 140, height: 90, assetId: 'RB-TEST-004', assetName: 'Rigol DS1054Z Scope', status: 'AVAILABLE', operator: 'None' },
+      { id: 'ws-7', label: '3D Printer Cell 1', x: 520, y: 350, width: 140, height: 90, assetId: 'RB-3DPR-002', assetName: 'Prusa MK4 3D Printer', status: 'MAINTENANCE', operator: 'Alex Rivera' },
+      { id: 'ws-8', label: 'Motor Driver Bench', x: 710, y: 350, width: 140, height: 90, assetId: 'RB-DRIVER-008', assetName: 'L298N Dual H-Bridge', status: 'DAMAGED', operator: 'None' }
+    ]
+  },
+  activityLogs: [
+    { id: 'act-1', action: 'CHECKOUT_ISSUED', entityType: 'CHECKOUT', entityId: 'REQ-20261020-001', performedBy: 'admin', details: 'STM32F4 Discovery Board handed over to Maya Patel in GOOD condition.', timestamp: '2026-10-18T11:30:00Z' },
+    { id: 'act-2', action: 'MAINTENANCE_OPENED', entityType: 'MAINTENANCE', entityId: 'RB-3DPR-002', performedBy: 'admin', details: 'Opened HIGH priority work order for Prusa MK4 3D Printer.', timestamp: '2026-10-19T14:00:00Z' },
+    { id: 'act-3', action: 'FAULT_REPORTED', entityType: 'FAULT', entityId: 'RB-DRIVER-008', performedBy: 'student', details: 'Fault ticket logged: Channel B Overheat.', timestamp: '2026-10-20T08:15:00Z' },
+    { id: 'act-4', action: 'RESERVATION_CREATED', entityType: 'RESERVATION', entityId: 'res-1', performedBy: 'Prof. David Chen', details: 'Reserved TurtleBot 4 for Nov 1 - Nov 8.', timestamp: '2026-10-20T10:00:00Z' }
+  ]
+};
+
+// ---------------- PERSISTENCE HELPERS ----------------
+function loadDb() {
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      const data = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+      // Ensure all upgraded collections exist
+      if (!data.reservations) data.reservations = DEFAULT_DB.reservations;
+      if (!data.devices) data.devices = DEFAULT_DB.devices;
+      if (!data.notifications) data.notifications = DEFAULT_DB.notifications;
+      if (!data.digitalTwin) data.digitalTwin = DEFAULT_DB.digitalTwin;
+      return data;
+    }
+  } catch (e) {
+    console.error('Database load warning, using defaults:', e.message);
+  }
+  saveDb(DEFAULT_DB);
+  return DEFAULT_DB;
+}
+
+function saveDb(data) {
+  try {
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error saving database:', e.message);
+  }
+}
+
+function logActivity(action, entityType, entityId, performedBy, details) {
+  const db = loadDb();
+  const entry = {
+    id: 'act-' + Date.now(),
+    action,
+    entityType,
+    entityId,
+    performedBy: performedBy || 'System',
+    details,
+    timestamp: new Date().toISOString()
+  };
+  db.activityLogs.unshift(entry);
+  if (db.activityLogs.length > 300) db.activityLogs.pop();
+  saveDb(db);
+}
+
+function createNotification(title, message, severity, entityType, entityId) {
+  const db = loadDb();
+  const notif = {
+    id: 'notif-' + Date.now(),
+    title,
+    message,
+    severity: severity || 'MEDIUM',
+    entityType: entityType || 'SYSTEM',
+    entityId: entityId || '',
+    read: false,
+    timestamp: new Date().toISOString()
+  };
+  if (!db.notifications) db.notifications = [];
+  db.notifications.unshift(notif);
+  if (db.notifications.length > 50) db.notifications.pop();
+  saveDb(db);
+}
+
+// ---------------- SIMULATED TELEMETRY GENERATOR ----------------
+// Explicitly labeled simulated stream with deterministic fluctuations
+let simulationActive = true;
+setInterval(() => {
+  if (!simulationActive) return;
+  const db = loadDb();
+  if (!db.devices) return;
+
+  db.devices.forEach(dev => {
+    if (dev.status === 'RUNNING') {
+      dev.battery = Math.max(5, Number((dev.battery - 0.2).toFixed(1)));
+      dev.temperature = Number((dev.temperature + (Math.random() * 0.8 - 0.3)).toFixed(1));
+      dev.runtimeHours = Number((dev.runtimeHours + 0.01).toFixed(2));
+      dev.motorRpm = Math.floor(Math.random() * 40 + 100);
+      if (dev.battery < 15 && !dev.lowBatAlerted) {
+        dev.lowBatAlerted = true;
+        createNotification('Battery Low Alert', `${dev.name} battery is down to ${dev.battery}%. Return to docking bay.`, 'HIGH', 'DEVICE', dev.id);
+      }
+    } else if (dev.status === 'CHARGING') {
+      dev.battery = Math.min(100, Number((dev.battery + 0.5).toFixed(1)));
+      if (dev.battery >= 99) dev.status = 'AVAILABLE';
+    }
+    dev.lastPing = new Date().toISOString();
+  });
+  saveDb(db);
+}, 4000);
+
+// ---------------- PREDICTIVE RISK ENGINE ----------------
+function computePredictiveRisks(assets, faults, maintenance) {
+  return assets.map(asset => {
+    let score = 0;
+    const factors = [];
+
+    // Factor 1: Runtime hours
+    const runtime = asset.runtimeHours || 0;
+    if (runtime > 1200) {
+      score += 35;
+      factors.push(`High cumulative runtime (${runtime} hrs)`);
+    } else if (runtime > 700) {
+      score += 20;
+      factors.push(`Moderate runtime load (${runtime} hrs)`);
+    }
+
+    // Factor 2: Previous fault reports
+    const assetFaults = faults.filter(f => f.assetId === asset.assetId);
+    if (assetFaults.length >= 2) {
+      score += 30;
+      factors.push(`Recurring defect history (${assetFaults.length} past faults)`);
+    } else if (assetFaults.length === 1) {
+      score += 15;
+      factors.push(`Past fault incident recorded`);
+    }
+
+    // Factor 3: Current status & condition
+    if (asset.condition === 'POOR' || asset.condition === 'DAMAGED') {
+      score += 25;
+      factors.push(`Sub-optimal physical condition (${asset.condition})`);
+    } else if (asset.condition === 'FAIR') {
+      score += 10;
+      factors.push(`Normal component wear detected`);
+    }
+
+    // Factor 4: Warranty expiration proximity
+    if (asset.warrantyExpiry) {
+      const expiry = new Date(asset.warrantyExpiry);
+      const now = new Date();
+      if (expiry < now) {
+        score += 10;
+        factors.push('Manufacturer warranty expired');
+      }
+    }
+
+    score = Math.min(99, Math.max(5, score));
+    let category = 'LOW';
+    let action = 'Routine monthly inspection';
+    if (score >= 70) {
+      category = 'CRITICAL';
+      action = 'Immediate diagnostic overhaul and stress test';
+    } else if (score >= 45) {
+      category = 'HIGH';
+      action = 'Replace consumable seals and recalibrate sensors within 7 days';
+    } else if (score >= 25) {
+      category = 'MODERATE';
+      action = 'Lubricate mechanical drive trains & clean optical surfaces';
+    }
+
+    return {
+      assetId: asset.assetId,
+      name: asset.name,
+      category: asset.category,
+      riskScore: score,
+      riskCategory: category,
+      recommendedAction: action,
+      recommendedDate: new Date(Date.now() + (score > 60 ? 3 : 14) * 86400000).toISOString().slice(0, 10),
+      contributingFactors: factors
+    };
+  }).sort((a, b) => b.riskScore - a.riskScore);
+}
+
+// ---------------- QR CODE SVG GENERATOR ----------------
+// Generates a crisp, deterministic vector barcode/QR representation with zero external dependencies
+function generateQrSvg(dataString) {
+  // Deterministic 21x21 pseudo matrix seeded by string hash
+  let hash = 0;
+  for (let i = 0; i < dataString.length; i++) {
+    hash = ((hash << 5) - hash) + dataString.charCodeAt(i);
+    hash |= 0;
+  }
+  const size = 21;
+  const rects = [];
+  const cellSize = 6;
+
+  // Add standard 3 corner finder patterns
+  const drawFinder = (ox, oy) => {
+    rects.push(`<rect x="${ox * cellSize}" y="${oy * cellSize}" width="${7 * cellSize}" height="${7 * cellSize}" fill="#0f172a" stroke="#06b6d4" stroke-width="2"/>`);
+    rects.push(`<rect x="${(ox + 1) * cellSize}" y="${(oy + 1) * cellSize}" width="${5 * cellSize}" height="${5 * cellSize}" fill="#0f172a"/>`);
+    rects.push(`<rect x="${(ox + 2) * cellSize}" y="${(oy + 2) * cellSize}" width="${3 * cellSize}" height="${3 * cellSize}" fill="#06b6d4"/>`);
+  };
+  drawFinder(0, 0);
+  drawFinder(size - 7, 0);
+  drawFinder(0, size - 7);
+
+  // Fill pseudo-random payload grid
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if ((r < 8 && c < 8) || (r < 8 && c > size - 9) || (r > size - 9 && c < 8)) continue;
+      const bit = Math.abs((hash ^ (r * 31 + c * 17)) % 7) < 3;
+      if (bit) {
+        rects.push(`<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#06b6d4"/>`);
+      }
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size * cellSize} ${size * cellSize}" width="140" height="140" style="background:#090d16; border-radius:6px; padding:6px; border:1px solid #1e293b;">
+    ${rects.join('\n')}
+  </svg>`;
+}
+
+// ---------------- HTTP UTILITIES ----------------
+function getJsonBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        resolve({});
+      }
+    });
+  });
+}
+
+function sendJson(res, statusCode, payload) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  });
+  res.end(JSON.stringify(payload));
+}
+
+function sendCsv(res, filename, csvContent) {
+  res.writeHead(200, {
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': `attachment; filename="${filename}"`,
+    'Access-Control-Allow-Origin': '*'
+  });
+  res.end(csvContent);
+}
+
+// ---------------- MAIN HTTP SERVER ----------------
+const server = http.createServer(async (req, res) => {
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = parsedUrl.pathname;
+  const method = req.method;
+
+  // Handle CORS
+  if (method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    });
+    res.end();
+    return;
+  }
+
+  // ==================== REST API ====================
+  if (pathname.startsWith('/api/')) {
+    const db = loadDb();
+
+    // 1. Auth Login & Me
+    if (pathname === '/api/auth/login' && method === 'POST') {
+      const body = await getJsonBody(req);
+      const user = db.users.find(u => u.email === body.email);
+      if (!user || user.password !== body.password) {
+        return sendJson(res, 401, { success: false, message: 'Invalid credentials. Please verify email and password.' });
+      }
+      return sendJson(res, 200, {
+        success: true,
+        message: 'Login successful',
+        data: {
+          token: 'mock-jwt-token-' + user.role + '-' + Date.now(),
+          type: 'Bearer',
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          department: user.department
+        }
+      });
+    }
+
+    if (pathname === '/api/auth/me' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: db.users[0] });
+    }
+
+    // 2. Mission Control Telemetry Summary
+    if (pathname === '/api/dashboard/summary' && method === 'GET') {
+      const totalAssets = db.assets.reduce((sum, a) => sum + (Number(a.quantity) || 1), 0);
+      const availableUnits = db.assets.reduce((sum, a) => sum + (Number(a.availableQuantity) || 0), 0);
+      const inUseUnits = db.checkouts.filter(c => c.status === 'ISSUED').reduce((sum, c) => sum + (Number(c.quantity) || 1), 0);
+      const maintenanceUnits = db.maintenance.filter(m => m.status !== 'COMPLETED').length;
+      const damagedUnits = db.assets.filter(a => a.status === 'DAMAGED').length;
+      const pendingCheckouts = db.checkouts.filter(c => c.status === 'PENDING').length;
+      const overdueCheckouts = db.checkouts.filter(c => c.status === 'OVERDUE' || (c.status === 'ISSUED' && new Date(c.dueDate) < new Date())).length;
+      const openFaultReports = db.faults.filter(f => f.status !== 'RESOLVED' && f.status !== 'DISMISSED').length;
+      const totalRepairCost = db.maintenance.reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+      const utilizationRate = totalAssets > 0 ? Number(((inUseUnits / totalAssets) * 100).toFixed(1)) : 0;
+
+      const statusDistribution = {};
+      db.assets.forEach(a => { statusDistribution[a.status] = (statusDistribution[a.status] || 0) + (a.quantity || 1); });
+
+      const categoryDistribution = {};
+      db.assets.forEach(a => { categoryDistribution[a.category] = (categoryDistribution[a.category] || 0) + (a.quantity || 1); });
+
+      return sendJson(res, 200, {
+        success: true,
+        data: {
+          totalAssets,
+          availableUnits,
+          inUseUnits,
+          maintenanceUnits,
+          damagedUnits,
+          pendingCheckouts,
+          overdueCheckouts,
+          openFaultReports,
+          totalRepairCost,
+          utilizationRate,
+          statusDistribution,
+          categoryDistribution,
+          activeProjectsCount: db.projects.filter(p => p.status === 'ACTIVE').length,
+          recentActivity: db.activityLogs.slice(0, 8),
+          recentOverdue: db.checkouts.filter(c => c.status === 'OVERDUE' || (c.status === 'ISSUED' && new Date(c.dueDate) < new Date())),
+          criticalAlerts: db.notifications.filter(n => n.severity === 'CRITICAL' && !n.read)
+        }
+      });
+    }
+
+    // 3. Robot Fleet Telemetry
+    if (pathname === '/api/telemetry/devices' && method === 'GET') {
+      return sendJson(res, 200, {
+        success: true,
+        provider: 'SIMULATED TELEMETRY PROVIDER — DEMO MODE',
+        active: simulationActive,
+        data: db.devices
+      });
+    }
+
+    if (pathname.startsWith('/api/telemetry/devices/') && pathname.endsWith('/command') && method === 'POST') {
+      const devId = pathname.split('/')[4];
+      const body = await getJsonBody(req);
+      const dev = db.devices.find(d => d.id === devId);
+      if (!dev) return sendJson(res, 404, { success: false, message: 'Device not found' });
+      if (body.command === 'CALIBRATE') {
+        dev.status = 'RUNNING';
+        dev.temperature = 36.5;
+        logActivity('DEVICE_CALIBRATED', 'DEVICE', dev.id, 'admin', `Executed remote sensor calibration on ${dev.name}`);
+      } else if (body.command === 'EMERGENCY_STOP') {
+        dev.status = 'STOPPED';
+        dev.motorRpm = 0;
+        logActivity('DEVICE_E_STOP', 'DEVICE', dev.id, 'admin', `Triggered EMERGENCY STOP on ${dev.name}`);
+      }
+      saveDb(db);
+      return sendJson(res, 200, { success: true, message: `Command ${body.command} dispatched`, data: dev });
+    }
+
+    // 4. Digital Twin Studio
+    if (pathname === '/api/digital-twin/layout' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: db.digitalTwin });
+    }
+
+    if (pathname === '/api/digital-twin/layout' && method === 'PUT') {
+      const body = await getJsonBody(req);
+      db.digitalTwin = body;
+      saveDb(db);
+      logActivity('TWIN_LAYOUT_UPDATED', 'DIGITAL_TWIN', 'LAB-1', 'admin', 'Updated 2D laboratory digital twin layout.');
+      return sendJson(res, 200, { success: true, message: 'Layout updated', data: db.digitalTwin });
+    }
+
+    // 5. Explainable Predictive Maintenance
+    if (pathname === '/api/predictive-maintenance' && method === 'GET') {
+      const risks = computePredictiveRisks(db.assets, db.faults, db.maintenance);
+      return sendJson(res, 200, { success: true, data: risks });
+    }
+
+    // 6. Intelligent Resource Scheduling & Reservations
+    if (pathname === '/api/reservations' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: db.reservations });
+    }
+
+    if (pathname === '/api/reservations' && method === 'POST') {
+      const body = await getJsonBody(req);
+      const { assetId, startDate, endDate, reservedBy, projectName, notes } = body;
+
+      const asset = db.assets.find(a => a.assetId === assetId || a.id === assetId);
+      if (!asset) return sendJson(res, 404, { success: false, message: 'Asset not found' });
+
+      // Check conflict overlap across existing active reservations
+      const newStart = new Date(startDate);
+      const newEnd = new Date(endDate);
+      if (newEnd <= newStart) {
+        return sendJson(res, 400, { success: false, message: 'End date must be after start date.' });
+      }
+
+      const existingReservations = db.reservations.filter(r => r.assetId === asset.assetId && r.status === 'CONFIRMED');
+      const overlappingBookings = existingReservations.filter(r => {
+        const rStart = new Date(r.startDate);
+        const rEnd = new Date(r.endDate);
+        return (newStart <= rEnd && newEnd >= rStart);
+      });
+
+      // Capacity constraint: cannot exceed physical inventory units
+      if (overlappingBookings.length >= (asset.quantity || 1)) {
+        // Find alternative available asset in same category
+        const alternatives = db.assets.filter(a => a.category === asset.category && a.assetId !== asset.assetId && a.availableQuantity > 0);
+        return sendJson(res, 409, {
+          success: false,
+          conflict: true,
+          message: `Reservation capacity reached: all ${asset.quantity} unit(s) of ${asset.name} are already booked for this interval.`,
+          alternatives: alternatives.map(alt => ({ assetId: alt.assetId, name: alt.name, location: alt.location }))
+        });
+      }
+
+      const reservation = {
+        id: 'res-' + Date.now(),
+        assetId: asset.assetId,
+        assetName: asset.name,
+        reservedBy: reservedBy || 'Researcher',
+        projectName: projectName || 'Autonomous Research',
+        startDate,
+        endDate,
+        status: 'CONFIRMED',
+        notes: notes || ''
+      };
+      db.reservations.push(reservation);
+      saveDb(db);
+      logActivity('RESERVATION_CREATED', 'RESERVATION', reservation.id, reservation.reservedBy, `Reserved ${asset.name} from ${startDate} to ${endDate}`);
+      createNotification('Resource Reserved', `${reservation.reservedBy} scheduled ${asset.name} for ${startDate}.`, 'MEDIUM', 'RESERVATION', reservation.id);
+      return sendJson(res, 201, { success: true, message: 'Resource reservation confirmed without conflicts.', data: reservation });
+    }
+
+    if (pathname.startsWith('/api/reservations/') && method === 'DELETE') {
+      const resId = pathname.split('/')[3];
+      db.reservations = db.reservations.filter(r => r.id !== resId);
+      saveDb(db);
+      return sendJson(res, 200, { success: true, message: 'Reservation cancelled.' });
+    }
+
+    // 7. Operational Notifications
+    if (pathname === '/api/notifications' && method === 'GET') {
+      return sendJson(res, 200, {
+        success: true,
+        unreadCount: (db.notifications || []).filter(n => !n.read).length,
+        data: db.notifications || []
+      });
+    }
+
+    if (pathname === '/api/notifications/read-all' && method === 'POST') {
+      (db.notifications || []).forEach(n => n.read = true);
+      saveDb(db);
+      return sendJson(res, 200, { success: true, message: 'All notifications marked as read' });
+    }
+
+    // 8. Global Multi-Index Search
+    if (pathname === '/api/search' && method === 'GET') {
+      const q = (parsedUrl.searchParams.get('q') || '').toLowerCase().trim();
+      if (!q) return sendJson(res, 200, { success: true, data: { assets: [], projects: [], checkouts: [], maintenance: [], faults: [] } });
+
+      const matchedAssets = db.assets.filter(a => (a.name || '').toLowerCase().includes(q) || (a.assetId || '').toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q));
+      const matchedProjects = db.projects.filter(p => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q));
+      const matchedCheckouts = db.checkouts.filter(c => (c.requestId || '').toLowerCase().includes(q) || (c.assetName || '').toLowerCase().includes(q) || (c.requesterFullName || '').toLowerCase().includes(q));
+      const matchedMaintenance = db.maintenance.filter(m => (m.assetName || '').toLowerCase().includes(q) || (m.issueDescription || '').toLowerCase().includes(q));
+      const matchedFaults = db.faults.filter(f => (f.title || '').toLowerCase().includes(q) || (f.assetName || '').toLowerCase().includes(q) || (f.assetId || '').toLowerCase().includes(q));
+
+      return sendJson(res, 200, {
+        success: true,
+        data: {
+          assets: matchedAssets.slice(0, 5),
+          projects: matchedProjects.slice(0, 5),
+          checkouts: matchedCheckouts.slice(0, 5),
+          maintenance: matchedMaintenance.slice(0, 5),
+          faults: matchedFaults.slice(0, 5)
+        }
+      });
+    }
+
+    // 9. Reporting & CSV Export Center
+    if (pathname === '/api/reports/assets/csv' && method === 'GET') {
+      const headers = ['Asset ID', 'Name', 'Category', 'Brand', 'Model', 'Total Qty', 'Avail Qty', 'Status', 'Condition', 'Location', 'Acquisition Cost'];
+      const rows = db.assets.map(a => [
+        a.assetId, `"${a.name.replace(/"/g, '""')}"`, a.category, a.brand, a.model, a.quantity, a.availableQuantity, a.status, a.condition, `"${a.location}"`, a.acquisitionCost || 0
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      return sendCsv(res, 'robovault_assets_inventory.csv', csv);
+    }
+
+    if (pathname === '/api/reports/checkouts/csv' && method === 'GET') {
+      const headers = ['Request ID', 'Requester', 'Asset ID', 'Asset Name', 'Quantity', 'Status', 'Request Date', 'Due Date', 'Notes'];
+      const rows = db.checkouts.map(c => [
+        c.requestId, c.requesterFullName, c.assetId, `"${c.assetName}"`, c.quantity, c.status, c.requestDate, c.dueDate, `"${(c.notes || '').replace(/"/g, '""')}"`
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      return sendCsv(res, 'robovault_custody_report.csv', csv);
+    }
+
+    if (pathname === '/api/reports/maintenance/csv' && method === 'GET') {
+      const headers = ['Asset ID', 'Equipment Name', 'Priority', 'Status', 'Issue Description', 'Technician', 'Repair Cost', 'Downtime Hours'];
+      const rows = db.maintenance.map(m => [
+        m.assetId, `"${m.assetName}"`, m.priority, m.status, `"${m.issueDescription.replace(/"/g, '""')}"`, m.assignedTechnician, m.cost, m.downtimeHours || 0
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      return sendCsv(res, 'robovault_maintenance_costs.csv', csv);
+    }
+
+    if (pathname === '/api/reports/audit/csv' && method === 'GET') {
+      const headers = ['Timestamp', 'Action', 'Entity Type', 'Entity ID', 'Operator', 'Details'];
+      const rows = db.activityLogs.map(l => [
+        l.timestamp, l.action, l.entityType, l.entityId, l.performedBy, `"${(l.details || '').replace(/"/g, '""')}"`
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      return sendCsv(res, 'robovault_audit_trail.csv', csv);
+    }
+
+    // 10. System Health & Observability
+    if (pathname === '/api/health/system' && method === 'GET') {
+      const mem = process.memoryUsage();
+      return sendJson(res, 200, {
+        success: true,
+        status: 'UP',
+        timestamp: new Date().toISOString(),
+        uptimeSeconds: Math.floor((Date.now() - SERVER_START_TIME) / 1000),
+        database: {
+          type: 'JSON Persistent Storage Engine (Synchronized with MongoDB Schema)',
+          fileSizeBytes: fs.existsSync(DB_PATH) ? fs.statSync(DB_PATH).size : 0,
+          collections: {
+            assets: db.assets.length,
+            checkouts: db.checkouts.length,
+            maintenance: db.maintenance.length,
+            projects: db.projects.length,
+            faults: db.faults.length,
+            reservations: db.reservations.length,
+            devices: db.devices.length,
+            auditLogs: db.activityLogs.length
+          }
+        },
+        memory: {
+          rssMb: (mem.rss / (1024 * 1024)).toFixed(1),
+          heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(1),
+          heapTotalMb: (mem.heapTotal / (1024 * 1024)).toFixed(1)
+        },
+        telemetrySimulator: {
+          status: simulationActive ? 'ACTIVE_TICKING' : 'PAUSED',
+          frequencySeconds: 4,
+          connectedDevicesCount: db.devices.length
+        }
+      });
+    }
+
+    // 11. Assets CRUD & Search
+    if (pathname === '/api/assets/all' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: db.assets });
+    }
+
+    if (pathname === '/api/assets' && method === 'GET') {
+      let list = [...db.assets];
+      const q = parsedUrl.searchParams.get('query');
+      const cat = parsedUrl.searchParams.get('category');
+      const stat = parsedUrl.searchParams.get('status');
+
+      if (q) {
+        const term = q.toLowerCase();
+        list = list.filter(a => a.name.toLowerCase().includes(term) || a.assetId.toLowerCase().includes(term) || a.brand?.toLowerCase().includes(term));
+      }
+      if (cat) list = list.filter(a => a.category === cat);
+      if (stat) list = list.filter(a => a.status === stat);
+
+      return sendJson(res, 200, {
+        success: true,
+        data: { content: list, totalElements: list.length, totalPages: 1, currentPage: 0, pageSize: 50 }
+      });
+    }
+
+    if (pathname === '/api/assets' && method === 'POST') {
+      const body = await getJsonBody(req);
+      if (db.assets.some(a => a.assetId === body.assetId)) {
+        return sendJson(res, 400, { success: false, message: 'Asset ID already registered in database.' });
+      }
+      const newAsset = {
+        id: 'ast-' + Date.now(),
+        assetId: body.assetId || 'RB-GEN-' + Date.now().toString().slice(-4),
+        name: body.name,
+        category: body.category || 'ROBOTS',
+        brand: body.brand || 'Lab Generic',
+        model: body.model || 'Standard',
+        serialNumber: body.serialNumber || 'N/A',
+        quantity: Number(body.quantity) || 1,
+        availableQuantity: Number(body.quantity) || 1,
+        location: body.location || 'Robotics Lab',
+        status: body.status || 'AVAILABLE',
+        condition: body.condition || 'GOOD',
+        purchaseDate: body.purchaseDate || new Date().toISOString().slice(0, 10),
+        warrantyExpiry: body.warrantyExpiry || new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
+        acquisitionCost: Number(body.acquisitionCost) || 0,
+        runtimeHours: 0,
+        description: body.description || '',
+        createdAt: new Date().toISOString()
+      };
+      db.assets.push(newAsset);
+      saveDb(db);
+      logActivity('ASSET_CREATED', 'ASSET', newAsset.assetId, 'Admin', `Created asset ${newAsset.name} (${newAsset.assetId})`);
+      return sendJson(res, 201, { success: true, message: 'Asset registered successfully', data: newAsset });
+    }
+
+    if (pathname.startsWith('/api/assets/') && method === 'DELETE') {
+      const id = pathname.split('/')[3];
+      const asset = db.assets.find(a => a.id === id || a.assetId === id);
+      if (!asset) return sendJson(res, 404, { success: false, message: 'Asset not found' });
+      const activeCheckouts = db.checkouts.some(c => (c.assetId === asset.assetId || c.assetId === asset.id) && ['PENDING', 'APPROVED', 'ISSUED'].includes(c.status));
+      if (activeCheckouts) {
+        return sendJson(res, 400, { success: false, message: 'Cannot delete asset while active checkout custody records exist.' });
+      }
+      db.assets = db.assets.filter(a => a.id !== asset.id);
+      saveDb(db);
+      logActivity('ASSET_DELETED', 'ASSET', asset.assetId, 'Admin', `Removed asset ${asset.name}`);
+      return sendJson(res, 200, { success: true, message: 'Asset deleted successfully' });
+    }
+
+    // 12. Checkouts & Custody
+    if (pathname === '/api/checkouts' && method === 'GET') {
+      return sendJson(res, 200, {
+        success: true,
+        data: { content: db.checkouts, totalElements: db.checkouts.length, totalPages: 1, currentPage: 0 }
+      });
+    }
+
+    if (pathname === '/api/checkouts' && method === 'POST') {
+      const body = await getJsonBody(req);
+      const asset = db.assets.find(a => a.assetId === body.assetId || a.id === body.assetId);
+      if (!asset) return sendJson(res, 404, { success: false, message: 'Equipment not found' });
+      const qty = Number(body.quantity) || 1;
+      if (asset.availableQuantity < qty) {
+        return sendJson(res, 400, { success: false, message: `Insufficient available stock. Requested: ${qty}, Available: ${asset.availableQuantity}` });
+      }
+      const record = {
+        id: 'chk-' + Date.now(),
+        requestId: 'REQ-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(100 + Math.random() * 900),
+        requesterUsername: body.requesterUsername || 'student',
+        requesterFullName: body.requesterFullName || 'Maya Patel',
+        assetId: asset.assetId,
+        assetName: asset.name,
+        quantity: qty,
+        projectName: body.projectName || 'Independent Lab Research',
+        requestDate: new Date().toISOString(),
+        dueDate: body.dueDate || new Date(Date.now() + 7 * 86400000).toISOString(),
+        status: 'PENDING',
+        approverUsername: null,
+        approvedAt: null,
+        issuedAt: null,
+        returnedAt: null,
+        issueCondition: null,
+        returnCondition: null,
+        notes: body.notes || ''
+      };
+      db.checkouts.unshift(record);
+      saveDb(db);
+      logActivity('CHECKOUT_REQUESTED', 'CHECKOUT', record.requestId, record.requesterUsername, `Requested ${qty}x ${asset.name}`);
+      createNotification('New Checkout Request', `${record.requesterFullName} submitted borrow request for ${asset.name}.`, 'MEDIUM', 'CHECKOUT', record.requestId);
+      return sendJson(res, 201, { success: true, message: 'Checkout request submitted', data: record });
+    }
+
+    if (pathname.includes('/approve') && method === 'POST') {
+      const id = pathname.split('/')[3];
+      const record = db.checkouts.find(c => c.id === id || c.requestId === id);
+      if (!record) return sendJson(res, 404, { success: false, message: 'Request not found' });
+      record.status = 'APPROVED';
+      record.approverUsername = 'admin';
+      record.approvedAt = new Date().toISOString();
+      saveDb(db);
+      logActivity('CHECKOUT_APPROVED', 'CHECKOUT', record.requestId, 'admin', `Approved checkout request ${record.requestId}`);
+      createNotification('Checkout Approved', `Request ${record.requestId} for ${record.assetName} approved. Ready for issue.`, 'MEDIUM', 'CHECKOUT', record.requestId);
+      return sendJson(res, 200, { success: true, message: 'Request approved', data: record });
+    }
+
+    if (pathname.includes('/reject') && method === 'POST') {
+      const id = pathname.split('/')[3];
+      const body = await getJsonBody(req);
+      const record = db.checkouts.find(c => c.id === id || c.requestId === id);
+      if (!record) return sendJson(res, 404, { success: false, message: 'Request not found' });
+      record.status = 'REJECTED';
+      record.rejectionReason = body.rejectionReason || 'Declined by laboratory administrator.';
+      saveDb(db);
+      logActivity('CHECKOUT_REJECTED', 'CHECKOUT', record.requestId, 'admin', `Rejected request ${record.requestId}: ${record.rejectionReason}`);
+      return sendJson(res, 200, { success: true, message: 'Request rejected', data: record });
+    }
+
+    if (pathname.includes('/issue') && method === 'POST') {
+      const id = pathname.split('/')[3];
+      const body = await getJsonBody(req);
+      const record = db.checkouts.find(c => c.id === id || c.requestId === id);
+      if (!record) return sendJson(res, 404, { success: false, message: 'Request not found' });
+      const asset = db.assets.find(a => a.assetId === record.assetId);
+      if (asset) {
+        asset.availableQuantity = Math.max(0, asset.availableQuantity - record.quantity);
+        if (asset.availableQuantity === 0) asset.status = 'IN_USE';
+      }
+      record.status = 'ISSUED';
+      record.issuedAt = new Date().toISOString();
+      record.issueCondition = body.issueCondition || 'GOOD';
+      saveDb(db);
+      logActivity('CHECKOUT_ISSUED', 'CHECKOUT', record.requestId, 'admin', `Issued equipment ${record.assetName} to ${record.requesterUsername}`);
+      return sendJson(res, 200, { success: true, message: 'Equipment issued to operator', data: record });
+    }
+
+    if (pathname.includes('/return') && method === 'POST') {
+      const id = pathname.split('/')[3];
+      const body = await getJsonBody(req);
+      const record = db.checkouts.find(c => c.id === id || c.requestId === id);
+      if (!record) return sendJson(res, 404, { success: false, message: 'Request not found' });
+      record.status = 'RETURNED';
+      record.returnedAt = new Date().toISOString();
+      record.returnCondition = body.returnCondition || 'GOOD';
+      const asset = db.assets.find(a => a.assetId === record.assetId);
+      if (asset) {
+        if (record.returnCondition === 'DAMAGED' || record.returnCondition === 'POOR') {
+          asset.status = 'MAINTENANCE';
+          createNotification('Damaged Return', `Asset ${asset.name} returned in ${record.returnCondition} condition. Sent to repair queue.`, 'HIGH', 'MAINTENANCE', asset.assetId);
+        } else {
+          asset.availableQuantity = Math.min(asset.quantity, asset.availableQuantity + record.quantity);
+          asset.status = 'AVAILABLE';
+        }
+      }
+      saveDb(db);
+      logActivity('CHECKOUT_RETURNED', 'CHECKOUT', record.requestId, 'admin', `Equipment returned in ${record.returnCondition} condition.`);
+      return sendJson(res, 200, { success: true, message: 'Return processed and condition audited', data: record });
+    }
+
+    // 13. Maintenance Workbench
+    if (pathname === '/api/maintenance' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: { content: db.maintenance, totalElements: db.maintenance.length, totalPages: 1 } });
+    }
+
+    if (pathname === '/api/maintenance' && method === 'POST') {
+      const body = await getJsonBody(req);
+      const asset = db.assets.find(a => a.assetId === body.assetId || a.id === body.assetId);
+      const item = {
+        id: 'mnt-' + Date.now(),
+        assetId: body.assetId,
+        assetName: asset ? asset.name : body.assetId,
+        status: 'SCHEDULED',
+        priority: body.priority || 'MEDIUM',
+        rootCause: body.rootCause || 'MECHANICAL_WEAR',
+        assignedTechnician: body.assignedTechnician || 'Alex Rivera',
+        issueDescription: body.issueDescription || '',
+        diagnosisFindings: '',
+        actionsTaken: '',
+        partsReplaced: [],
+        cost: 0,
+        slaHours: body.slaHours || 48,
+        downtimeHours: 0,
+        checklist: [{ item: 'Visual Safety Inspection', done: false }, { item: 'Diagnostic Test Suite', done: false }, { item: 'Operational Verification', done: false }],
+        startDate: new Date().toISOString(),
+        completionDate: null,
+        openedBy: 'admin'
+      };
+      if (asset) asset.status = 'MAINTENANCE';
+      db.maintenance.unshift(item);
+      saveDb(db);
+      logActivity('MAINTENANCE_OPENED', 'MAINTENANCE', item.assetId, 'admin', `Logged maintenance ticket for ${item.assetName}`);
+      return sendJson(res, 201, { success: true, message: 'Maintenance order registered', data: item });
+    }
+
+    if (pathname.includes('/resolve') && method === 'POST') {
+      const id = pathname.split('/')[3];
+      const body = await getJsonBody(req);
+      const m = db.maintenance.find(x => x.id === id);
+      if (!m) return sendJson(res, 404, { success: false, message: 'Ticket not found' });
+      m.actionsTaken = body.actionsTaken || 'Resolved and re-tested';
+      m.cost = Number(body.cost) || 15.0;
+      m.status = 'RESOLVED';
+      m.completionDate = new Date().toISOString();
+      const asset = db.assets.find(a => a.assetId === m.assetId);
+      if (asset) asset.status = 'AVAILABLE';
+      saveDb(db);
+      logActivity('MAINTENANCE_RESOLVED', 'MAINTENANCE', m.assetId, 'admin', `Completed repair on ${m.assetName} ($${m.cost})`);
+      return sendJson(res, 200, { success: true, message: 'Repair resolved and equipment marked available', data: m });
+    }
+
+    // 14. Projects & Hardware Dedication
+    if (pathname === '/api/projects' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: { content: db.projects, totalElements: db.projects.length, totalPages: 1 } });
+    }
+
+    if (pathname === '/api/projects' && method === 'POST') {
+      const body = await getJsonBody(req);
+      const p = {
+        id: 'prj-' + Date.now(),
+        code: body.code || 'PRJ-' + Date.now().toString().slice(-4),
+        name: body.name,
+        description: body.description || '',
+        leadFaculty: body.leadFaculty || '',
+        leadStudent: body.leadStudent || '',
+        department: body.department || 'Robotics',
+        status: body.status || 'ACTIVE',
+        startDate: body.startDate || new Date().toISOString().slice(0, 10),
+        targetCompletionDate: body.targetCompletionDate || '',
+        allocations: []
+      };
+      db.projects.push(p);
+      saveDb(db);
+      logActivity('PROJECT_CREATED', 'PROJECT', p.code, 'admin', `Created project: ${p.name}`);
+      return sendJson(res, 201, { success: true, message: 'Project registered', data: p });
+    }
+
+    // 15. Fault Reports
+    if (pathname === '/api/faults' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: { content: db.faults, totalElements: db.faults.length, totalPages: 1 } });
+    }
+
+    if (pathname === '/api/faults' && method === 'POST') {
+      const body = await getJsonBody(req);
+      const asset = db.assets.find(a => a.assetId === body.assetId || a.id === body.assetId);
+      const fault = {
+        id: 'flt-' + Date.now(),
+        assetId: body.assetId,
+        assetName: asset ? asset.name : body.assetId,
+        title: body.title,
+        description: body.description || '',
+        symptoms: body.symptoms || '',
+        severity: body.severity || 'MEDIUM',
+        status: 'REPORTED',
+        reportedBy: body.reportedBy || 'Student',
+        reportedAt: new Date().toISOString(),
+        assignedTechnician: null,
+        resolution: null
+      };
+      db.faults.unshift(fault);
+      saveDb(db);
+      logActivity('FAULT_REPORTED', 'FAULT', fault.assetId, fault.reportedBy, `Reported defect: ${fault.title}`);
+      if (fault.severity === 'CRITICAL' || fault.severity === 'HIGH') {
+        createNotification('Critical Defect Reported', `${fault.title} on ${fault.assetName}. Immediate inspection needed.`, fault.severity, 'FAULT', fault.id);
+      }
+      return sendJson(res, 201, { success: true, message: 'Fault report registered', data: fault });
+    }
+
+    // 16. Users & Audit
+    if (pathname === '/api/users' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: { content: db.users, totalElements: db.users.length, totalPages: 1 } });
+    }
+
+    if (pathname === '/api/activity-logs' && method === 'GET') {
+      return sendJson(res, 200, { success: true, data: { content: db.activityLogs, totalElements: db.activityLogs.length, totalPages: 1, currentPage: 0 } });
+    }
+
+    return sendJson(res, 404, { success: false, message: 'API Endpoint not found' });
+  }
+
+  // ==================== FRONTEND WEB PORTAL ====================
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(renderNexusUi());
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`=======================================================`);
+  console.log(`⚡ ROBO VAULT NEXUS PLATFORM RUNNING AT:`);
+  console.log(`   http://localhost:${PORT}`);
+  console.log(`=======================================================`);
+  console.log(`[Nexus Engine] Telemetry Simulator, Digital Twin & API Active`);
+});
+
+// ---------------- ENTERPRISE NEXUS FRONTEND TEMPLATE ----------------
+function renderNexusUi() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROBO VAULT NEXUS — Robotics Operations Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #060911;
+      --bg-surface: #0c1220;
+      --bg-card: #10192d;
+      --bg-card-hover: #16223e;
+      --border: #1a2744;
+      --border-accent: rgba(6, 182, 212, 0.4);
+      --primary: #06b6d4;
+      --primary-hover: #0891b2;
+      --secondary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+    }
+    /* Layout */
+    .sidebar {
+      width: 270px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 20;
+    }
+    .brand {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.45);
+    }
+    .brand-title { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.01em; color: #fff; display: flex; align-items: center; gap: 0.4rem; }
+    .brand-badge { font-size: 0.65rem; background: rgba(6, 182, 212, 0.2); color: var(--primary); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+    .brand-sub { font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    
+    .nav-links { padding: 1rem 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.2rem; overflow-y: auto; }
+    .nav-section { font-size: 0.68rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.08em; padding: 0.6rem 0.85rem 0.2rem; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .nav-item.active { background: rgba(6, 182, 212, 0.14); color: var(--primary); font-weight: 600; border-left: 3px solid var(--primary); }
+    
+    .main-area { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+    .topbar {
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 15;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .topbar-right { display: flex; align-items: center; gap: 1.25rem; }
+    .content { padding: 1.75rem; max-width: 1440px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Telemetry & UI Components */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.25rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }
+    
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--primary);
+    }
+    .stat-val { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #fff; }
+    .stat-lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-AVAILABLE, .badge-CONFIRMED, .badge-ONLINE { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-ISSUED, .badge-IN_USE, .badge-RUNNING { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .badge-PENDING, .badge-SCHEDULED { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .badge-MAINTENANCE, .badge-IN_REPAIR, .badge-CHARGING { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+    .badge-DAMAGED, .badge-CRITICAL, .badge-REJECTED, .badge-STOPPED { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .badge-ACTIVE, .badge-APPROVED, .badge-LOW { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
+    .badge-RETURNED, .badge-RESOLVED { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--primary); color: #000; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+    .btn-outline:hover { background: var(--bg-card-hover); color: #fff; }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
+    .btn-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    .table th { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 600; }
+    .table td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+    .table tr:hover td { background: rgba(255, 255, 255, 0.015); }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.9rem; }
+    .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.55rem 0.8rem;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--primary); }
+
+    /* Modals & Command Palette */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+    }
+    .modal-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%; max-width: 560px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    }
+    .modal-hdr { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 1.25rem; max-height: 70vh; overflow-y: auto; }
+    .modal-ftr { padding: 1rem 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+    /* Command Palette */
+    .cmd-palette {
+      width: 100%; max-width: 640px; background: var(--bg-surface); border: 1px solid var(--primary);
+      border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); overflow: hidden;
+    }
+    .cmd-input {
+      width: 100%; padding: 1rem 1.25rem; background: var(--bg-base); border: none; border-bottom: 1px solid var(--border);
+      color: #fff; font-size: 1.1rem; outline: none; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .cmd-results { max-height: 380px; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .cmd-item {
+      padding: 0.75rem 1rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; font-size: 0.9rem; transition: background 0.1s;
+    }
+    .cmd-item:hover, .cmd-item.active { background: rgba(6, 182, 212, 0.15); color: var(--primary); }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem; border-radius: var(--radius);
+      background: var(--bg-card); border-left: 4px solid var(--primary); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      z-index: 999; display: none; font-size: 0.9rem; animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Digital Twin Map */
+    .twin-canvas {
+      position: relative; width: 940px; height: 580px; background: #080d19; border: 1px solid var(--border);
+      border-radius: 10px; margin: 0 auto; overflow: hidden; box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+    }
+    .twin-zone {
+      position: absolute; border: 1px dashed rgba(255,255,255,0.15); border-radius: 6px; padding: 8px;
+      font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;
+    }
+    .twin-node {
+      position: absolute; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .twin-node:hover { border-color: var(--primary); box-shadow: 0 0 12px rgba(6, 182, 212, 0.35); transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-title">ROBO VAULT <span class="brand-badge">NEXUS</span></div>
+        <div class="brand-sub">Robotics Intelligence</div>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <div class="nav-section">Mission Control</div>
+      <div class="nav-item active" onclick="switchTab('dashboard')">📊 Mission Command</div>
+      <div class="nav-item" onclick="switchTab('digitalTwin')">🗺️ Digital Twin Studio</div>
+      <div class="nav-item" onclick="switchTab('telemetry')">🤖 Robot Fleet Telemetry</div>
+      <div class="nav-item" onclick="switchTab('predictive')">🔮 Predictive Health</div>
+      <div class="nav-item" onclick="switchTab('scheduling')">📅 Resource Scheduling</div>
+
+      <div class="nav-section">Hardware & Custody</div>
+      <div class="nav-item" onclick="switchTab('assets')">📦 Assets & QR Catalog</div>
+      <div class="nav-item" onclick="switchTab('checkouts')">📋 Equipment Custody</div>
+      <div class="nav-item" onclick="switchTab('maintenance')">🔧 Maintenance Workbench</div>
+      <div class="nav-item" onclick="switchTab('projects')">🚀 Research Projects</div>
+      <div class="nav-item" onclick="switchTab('faults')">⚠️ Fault Reporting</div>
+
+      <div class="nav-section">Enterprise Intelligence</div>
+      <div class="nav-item" onclick="switchTab('reports')">📑 Reporting & CSV Export</div>
+      <div class="nav-item" onclick="switchTab('users')">👥 User Directory</div>
+      <div class="nav-item" onclick="switchTab('logs')">📜 System Audit Trail</div>
+      <div class="nav-item" onclick="switchTab('health')">🩺 System Observability</div>
+    </nav>
+
+    <div style="padding: 1rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.8rem;">
+      <div style="color: var(--text-muted); margin-bottom: 0.35rem; display: flex; justify-content: space-between;">
+        <span>Active Persona:</span>
+        <span style="color: var(--primary); font-family: 'JetBrains Mono', monospace;" id="roleBadge">ADMIN</span>
+      </div>
+      <select id="personaSelect" class="form-control" onchange="switchPersona(this.value)" style="padding: 0.35rem 0.5rem; font-size: 0.8rem;">
+        <option value="admin">Administrator (Dr. Vance)</option>
+        <option value="assistant">Lab Assistant (Alex Rivera)</option>
+        <option value="faculty">Faculty (Prof. Chen)</option>
+        <option value="student">Student (Maya Patel)</option>
+      </select>
+    </div>
+  </aside>
+
+  <!-- Main Viewport -->
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2 id="viewTitle" style="font-size: 1.15rem; font-weight: 700;">Command Center Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <!-- Command Palette Trigger -->
+        <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="openCommandPalette()">
+          <span>🔍 Quick Search</span>
+          <kbd style="background: var(--bg-card); padding: 1px 5px; border-radius: 4px; font-size: 0.7rem; color: var(--text-muted); border: 1px solid var(--border)">Ctrl+K</kbd>
+        </button>
+
+        <!-- Notification Bell -->
+        <button class="btn btn-outline" style="padding: 0.35rem 0.6rem; position: relative;" onclick="toggleNotifications()">
+          <span>🔔</span>
+          <span id="notifBadge" style="position: absolute; top: -4px; right: -4px; background: var(--danger); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 9999px;">0</span>
+        </button>
+
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Environment: <span style="color: var(--success); font-weight: 600;">● Localhost (Port 3000)</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="appContent">
+      <!-- Dynamic View Injected Here -->
+    </main>
+  </div>
+
+  <!-- Global Modal & Drawer -->
+  <div id="modalContainer" style="display: none;"></div>
+
+  <!-- Toast Notification -->
+  <div id="toast"></div>
+
+  <script>
+    let activeTab = 'dashboard';
+    let currentRole = 'ADMIN';
+    let currentUsername = 'admin';
+
+    // Global keyboard shortcut: Ctrl+K or Cmd+K
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openCommandPalette();
+      }
+    });
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--primary)';
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+
+    function switchPersona(p) {
+      if (p === 'admin') { currentRole = 'ADMIN'; currentUsername = 'admin'; }
+      if (p === 'assistant') { currentRole = 'LAB_ASSISTANT'; currentUsername = 'assistant'; }
+      if (p === 'faculty') { currentRole = 'FACULTY'; currentUsername = 'faculty'; }
+      if (p === 'student') { currentRole = 'STUDENT'; currentUsername = 'student'; }
+      document.getElementById('roleBadge').innerText = currentRole;
+      showToast('Switched persona to ' + currentRole);
+      renderCurrentView();
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      renderCurrentView();
+    }
+
+    async function apiFetch(url, options = {}) {
+      try {
+        const res = await fetch(url, options);
+        return await res.json();
+      } catch (err) {
+        showToast('API Communication Error: ' + err.message, true);
+        return null;
+      }
+    }
+
+    async function updateNotifCount() {
+      const res = await apiFetch('/api/notifications');
+      if (res && res.unreadCount !== undefined) {
+        document.getElementById('notifBadge').innerText = res.unreadCount;
+      }
+    }
+    setInterval(updateNotifCount, 8000);
+    updateNotifCount();
+
+    // ---------------- PRIMARY VIEW ROUTER ----------------
+    async function renderCurrentView() {
+      const container = document.getElementById('appContent');
+      const title = document.getElementById('viewTitle');
+
+      // 1. MISSION CONTROL DASHBOARD
+      if (activeTab === 'dashboard') {
+        title.innerText = 'Mission Control & Robotics Operations Telemetry';
+        container.innerHTML = '<div style="color: var(--text-muted); padding: 2rem; text-align: center;">Streaming real-time telemetry from lab nodes...</div>';
+        const res = await apiFetch('/api/dashboard/summary');
+        if (!res || !res.data) return;
+        const d = res.data;
+
+        container.innerHTML = \`
+          <div class="grid-4">
+            <div class="stat-card">
+              <div class="stat-lbl">Tracked Hardware Units</div>
+              <div class="stat-val" style="color: var(--primary)">\${d.totalAssets}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">Across 12 robotics categories</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Available Stock Units</div>
+              <div class="stat-val" style="color: var(--success)">\${d.availableUnits}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">Ready for immediate research</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Active Lab Custody</div>
+              <div class="stat-val" style="color: var(--secondary)">\${d.inUseUnits}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">Allocated to researchers</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Maintenance Backlog</div>
+              <div class="stat-val" style="color: var(--warning)">\${d.maintenanceUnits}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">$ \${d.totalRepairCost || 0} repairs committed</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.05rem;">Asset Status Allocation</h3>
+                <span class="badge badge-ACTIVE">Live Distribution</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                \${Object.entries(d.statusDistribution || {}).map(([k, v]) => \`
+                  <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+                      <span>\${k}</span>
+                      <strong>\${v} units (\${Math.round((v / (d.totalAssets || 1)) * 100)}%)</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden;">
+                      <div style="background: \${k === 'AVAILABLE' ? 'var(--success)' : k === 'IN_USE' ? 'var(--secondary)' : k === 'MAINTENANCE' ? 'var(--warning)' : 'var(--danger)'}; height: 100%; width: \${Math.min(100, (v / (d.totalAssets || 1)) * 100)}%;"></div>
+                    </div>
+                  </div>
+                \`).join('')}
+              </div>
+            </div>
+
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.05rem;">Critical Operational Alerts</h3>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time stream</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                \${(d.criticalAlerts && d.criticalAlerts.length > 0) ? d.criticalAlerts.map(a => \`
+                  <div style="padding: 0.65rem 0.85rem; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--danger); font-size: 0.85rem;">
+                    <strong style="color: var(--danger);">\${a.title}</strong>
+                    <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px;">\${a.message}</div>
+                  </div>
+                \`).join('') : '<div style="color: var(--success); font-size: 0.85rem; padding: 1rem 0;">✓ Zero critical operational anomalies detected. Systems nominal.</div>'}
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.85rem;">Immutable Operational Event History</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              \${(d.recentActivity || []).map(a => \`
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;">
+                  <div>
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.12); color: var(--primary); margin-right: 0.5rem;">\${a.action}</span>
+                    <span style="color: var(--text-secondary);">\${a.details}</span>
+                  </div>
+                  <span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">\${new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      }
+
+      // 2. DIGITAL TWIN STUDIO
+      if (activeTab === 'digitalTwin') {
+        title.innerText = 'Robotics Digital Twin Studio — 2D Laboratory Map';
+        const res = await apiFetch('/api/digital-twin/layout');
+        const dt = res?.data || { zones: [], workstations: [] };
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+              Interactive coordinate mapping of robotics workcells, docking platforms, and active hardware custody. Click any cell to inspect telemetry.
+            </p>
+            <span class="badge badge-ACTIVE">Live Coordinate Grid</span>
+          </div>
+
+          <div class="twin-canvas">
+            \${dt.zones.map(z => \`
+              <div class="twin-zone" style="left: \${z.x}px; top: \${z.y}px; width: \${z.width}px; height: \${z.height}px; border-color: \${z.color}33;">
+                <span style="color: \${z.color}">\${z.name}</span>
+              </div>
+            \`).join('')}
+
+            \${dt.workstations.map(w => \`
+              <div class="twin-node" style="left: \${w.x}px; top: \${w.y}px; width: \${w.width}px; height: \${w.height}px;" onclick="inspectTwinNode('\${w.id}', '\${w.assetId}')">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                  <strong style="color: var(--text-primary)">\${w.label}</strong>
+                  <span class="badge badge-\${w.status}" style="font-size: 0.6rem; padding: 1px 4px;">\${w.status}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">\${w.assetName}</div>
+                <div style="font-size: 0.68rem; color: var(--text-muted)">Op: \${w.operator}</div>
+              </div>
+            \`).join('')}
+          </div>
+        \`;
+      }
+
+      // 3. ROBOT FLEET TELEMETRY
+      if (activeTab === 'telemetry') {
+        title.innerText = 'Robot Fleet Telemetry & Live Telematics';
+        const res = await apiFetch('/api/telemetry/devices');
+        const devices = res?.data || [];
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--warning); font-size: 0.8rem; padding: 4px 8px;">
+                ⚠️ SIMULATED TELEMETRY PROVIDER — DEMO MODE
+              </span>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem;">
+                Telemetry generated deterministically with periodic battery consumption, thermal cycles, and motor speeds.
+              </p>
+            </div>
+            <button class="btn btn-outline" onclick="renderCurrentView()">🔄 Refresh Readings</button>
+          </div>
+
+          <div class="grid-2">
+            \${devices.map(d => \`
+              <div class="card" style="border-left: 4px solid \${d.status === 'RUNNING' ? 'var(--primary)' : d.status === 'CHARGING' ? 'var(--warning)' : 'var(--danger)'}">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                  <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 700;">\${d.name}</h3>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">ID: \${d.id} • IP: \${d.ipAddress}</div>
+                  </div>
+                  <span class="badge badge-\${d.status}">\${d.status}</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem; text-align: center;">
+                  <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted)">BATTERY</div>
+                    <strong style="color: \${d.battery < 20 ? 'var(--danger)' : 'var(--success)'}; font-size: 1.1rem;">\${d.battery}%</strong>
+                  </div>
+                  <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted)">TEMP</div>
+                    <strong style="color: \${d.temperature > 60 ? 'var(--danger)' : 'var(--text-primary)'}; font-size: 1.1rem;">\${d.temperature}°C</strong>
+                  </div>
+                  <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted)">SPEED</div>
+                    <strong style="color: var(--primary); font-size: 1.1rem;">\${d.motorRpm} RPM</strong>
+                  </div>
+                  <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px;">
+                    <div style="font-size: 0.7rem; color: var(--text-muted)">RUNTIME</div>
+                    <strong style="color: var(--secondary); font-size: 1.1rem;">\${Math.round(d.runtimeHours)}h</strong>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Mode: <strong style="color: var(--text-secondary)">\${d.mode}</strong></span>
+                  <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="dispatchDeviceCommand('\${d.id}', 'CALIBRATE')">Calibrate</button>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="dispatchDeviceCommand('\${d.id}', 'EMERGENCY_STOP')">E-Stop</button>
+                  </div>
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+        \`;
+      }
+
+      // 4. PREDICTIVE HEALTH ENGINE
+      if (activeTab === 'predictive') {
+        title.innerText = 'Explainable Predictive Maintenance & Risk Analytics';
+        const res = await apiFetch('/api/predictive-maintenance');
+        const risks = res?.data || [];
+
+        container.innerHTML = \`
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+            Multi-factor empirical risk scoring engine factoring cumulative runtime, physical condition wear, historical defect frequency, and warranty expiration.
+          </p>
+
+          <div class="grid-2">
+            \${risks.map(r => \`
+              <div class="card" style="border-left: 4px solid \${r.riskScore >= 70 ? 'var(--danger)' : r.riskScore >= 45 ? 'var(--warning)' : 'var(--primary)'}">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <div>
+                    <span style="font-size: 0.72rem; color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">\${r.assetId}</span>
+                    <h3 style="font-size: 1.15rem; font-weight: 700;">\${r.name}</h3>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: \${r.riskScore >= 70 ? 'var(--danger)' : r.riskScore >= 45 ? 'var(--warning)' : 'var(--success)'};">\${r.riskScore}%</div>
+                    <span class="badge badge-\${r.riskCategory}">\${r.riskCategory} RISK</span>
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 0.75rem;">
+                  <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem;">CONTRIBUTING RISK FACTORS:</div>
+                  <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    \${r.contributingFactors.map(f => \`
+                      <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+                        <span style="color: var(--warning)">•</span> \${f}
+                      </div>
+                    \`).join('')}
+                  </div>
+                </div>
+
+                <div style="background: var(--bg-card); padding: 0.65rem; border-radius: 6px; font-size: 0.82rem; margin-bottom: 0.75rem;">
+                  <strong style="color: var(--primary)">Recommended Action:</strong> \${r.recommendedAction}
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Target Service Date: \${r.recommendedDate}</div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                  <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="logMaintenanceFromRisk('\${r.assetId}', '\${r.recommendedAction}')">Schedule Preventative Repair</button>
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+        \`;
+      }
+
+      // 5. RESOURCE SCHEDULING & CONFLICT DETECTION
+      if (activeTab === 'scheduling') {
+        title.innerText = 'Intelligent Resource Scheduling & Reservation Calendar';
+        const res = await apiFetch('/api/reservations');
+        const reservations = res?.data || [];
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+              Guarantees zero overlapping allocations for physical hardware. Automatic conflict detection suggests nearest available equipment.
+            </p>
+            <button class="btn btn-primary" onclick="openReservationModal()">+ New Booking</button>
+          </div>
+
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Reserved By</th>
+                  <th>Research Project</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                \${reservations.map(r => \`
+                  <tr>
+                    <td>
+                      <strong style="color: var(--primary)">\${r.assetName}</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted)">\${r.assetId}</div>
+                    </td>
+                    <td>\${r.reservedBy}</td>
+                    <td>\${r.projectName}</td>
+                    <td>\${r.startDate}</td>
+                    <td>\${r.endDate}</td>
+                    <td><span class="badge badge-\${r.status}">\${r.status}</span></td>
+                    <td>
+                      <button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="cancelReservation('\${r.id}')">Cancel</button>
+                    </td>
+                  </tr>
+                \`).join('')}
+              </tbody>
+            </table>
+          </div>
+        \`;
+      }
+
+      // 6. ASSETS & QR CATALOG
+      if (activeTab === 'assets') {
+        title.innerText = 'Laboratory Asset Catalog & Smart QR Identifiers';
+        const res = await apiFetch('/api/assets');
+        const assets = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <input type="text" id="assetSearch" placeholder="Search by name, ID, or brand..." class="form-control" style="max-width: 320px;" oninput="filterAssetsTable()">
+            <button class="btn btn-primary" onclick="openCreateAssetModal()">+ Register Asset</button>
+          </div>
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="table" id="assetTable">
+              <thead>
+                <tr>
+                  <th>Asset ID & QR</th>
+                  <th>Equipment Name</th>
+                  <th>Category</th>
+                  <th>Quantity / Avail</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                \${assets.map(a => \`
+                  <tr>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--primary)">\${a.assetId}</span>
+                        <button class="btn btn-outline" style="padding: 2px 6px; font-size: 0.7rem;" title="View QR Tag" onclick="viewAssetQr('\${a.assetId}', '\${encodeURIComponent(a.name)}')">QR Tag</button>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>\${a.name}</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted)">\${a.brand} \${a.model} • \${a.runtimeHours || 0} hrs</div>
+                    </td>
+                    <td><span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-secondary)">\${a.category}</span></td>
+                    <td><strong>\${a.availableQuantity}</strong> / \${a.quantity}</td>
+                    <td>\${a.location}</td>
+                    <td><span class="badge badge-\${a.status}">\${a.status}</span></td>
+                    <td>
+                      <div style="display: flex; gap: 0.4rem;">
+                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="openCheckoutModal('\${a.assetId}')">Borrow</button>
+                        \${currentRole === 'ADMIN' ? \`<button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="deleteAsset('\${a.id}')">Delete</button>\` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                \`).join('')}
+              </tbody>
+            </table>
+          </div>
+        \`;
+      }
+
+      // 7. CHECKOUTS & CUSTODY
+      if (activeTab === 'checkouts') {
+        title.innerText = 'Equipment Custody & Checkouts State Machine';
+        const res = await apiFetch('/api/checkouts');
+        const checkouts = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Requester</th>
+                  <th>Equipment</th>
+                  <th>Quantity</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                \${checkouts.map(c => \`
+                  <tr>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">\${c.requestId}</td>
+                    <td>\${c.requesterFullName} (@\${c.requesterUsername})</td>
+                    <td><strong>\${c.assetName}</strong> (\${c.assetId})</td>
+                    <td>\${c.quantity}</td>
+                    <td>\${new Date(c.dueDate).toLocaleDateString()}</td>
+                    <td><span class="badge badge-\${c.status}">\${c.status}</span></td>
+                    <td>
+                      \${c.status === 'PENDING' && (currentRole === 'ADMIN' || currentRole === 'LAB_ASSISTANT') ? \`
+                        <button class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="approveCheckout('\${c.id}')">Approve</button>
+                        <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="rejectCheckout('\${c.id}')">Reject</button>
+                      \` : ''}
+                      \${c.status === 'APPROVED' && (currentRole === 'ADMIN' || currentRole === 'LAB_ASSISTANT') ? \`
+                        <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="issueCheckout('\${c.id}')">Issue Equipment</button>
+                      \` : ''}
+                      \${c.status === 'ISSUED' && (currentRole === 'ADMIN' || currentRole === 'LAB_ASSISTANT') ? \`
+                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="returnCheckout('\${c.id}')">Inspect & Return</button>
+                      \` : ''}
+                    </td>
+                  </tr>
+                \`).join('')}
+              </tbody>
+            </table>
+          </div>
+        \`;
+      }
+
+      // 8. MAINTENANCE WORKBENCH
+      if (activeTab === 'maintenance') {
+        title.innerText = 'Advanced Maintenance Workbench & Work Orders';
+        const res = await apiFetch('/api/maintenance');
+        const tickets = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-primary" onclick="openNewTicketModal()">+ Open Work Order</button>
+          </div>
+          <div class="grid-2">
+            \${tickets.map(t => \`
+              <div class="card" style="border-left: 4px solid var(--warning)">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <strong style="color: var(--primary)">\${t.assetName} (\${t.assetId})</strong>
+                  <span class="badge badge-\${t.status}">\${t.status}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">\${t.issueDescription}</div>
+                
+                <div style="background: var(--bg-card); padding: 0.5rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+                  <div>Assigned Tech: <strong style="color: var(--text-primary)">\${t.assignedTechnician}</strong></div>
+                  <div>Root Cause: <strong style="color: var(--warning)">\${t.rootCause || 'MECHANICAL'}</strong></div>
+                  <div>SLA Target: <strong>\${t.slaHours || 48} hrs</strong></div>
+                  <div>Repair Cost: <strong>$\${t.cost || 0}</strong></div>
+                </div>
+
+                \${t.status !== 'RESOLVED' ? \`
+                  <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <button class="btn btn-success" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="resolveTicket('\${t.id}')">Resolve & Restore Asset</button>
+                  </div>
+                \` : '<div style="color: var(--success); font-size: 0.8rem; font-weight: 600;">✓ Work Order Complete. Asset restored to AVAILABLE.</div>'}
+              </div>
+            \`).join('')}
+          </div>
+        \`;
+      }
+
+      // 9. RESEARCH PROJECTS
+      if (activeTab === 'projects') {
+        title.innerText = 'Supervised Research Projects & Allocations';
+        const res = await apiFetch('/api/projects');
+        const projs = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-primary" onclick="openNewProjectModal()">+ Register Project</button>
+          </div>
+          <div class="grid-2">
+            \${projs.map(p => \`
+              <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <div>
+                    <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">\${p.code}</span>
+                    <h3 style="font-size: 1.15rem; font-weight: 700;">\${p.name}</h3>
+                  </div>
+                  <span class="badge badge-\${p.status}">\${p.status}</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">\${p.description}</p>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">Lead: \${p.leadFaculty || p.leadStudent} • \${p.department}</div>
+                
+                <div style="background: rgba(255,255,255,0.02); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border);">
+                  <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 0.3rem;">Dedicated Hardware Pool:</div>
+                  \${(p.allocations || []).map(a => \`
+                    <span class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--primary); margin-right: 0.3rem;">\${a.assetName} x\${a.quantity}</span>
+                  \`).join('') || '<span style="font-size: 0.75rem; color: var(--text-muted);">None dedicated yet</span>'}
+                </div>
+              </div>
+            \`).join('')}
+          </div>
+        \`;
+      }
+
+      // 10. FAULT REPORTING
+      if (activeTab === 'faults') {
+        title.innerText = 'Field Defect & Fault Reports';
+        const res = await apiFetch('/api/faults');
+        const faults = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-danger" onclick="openReportFaultModal()">⚠️ Report Defect</button>
+          </div>
+          <div class="grid-2">
+            \${faults.map(f => \`
+              <div class="card" style="border-left: 4px solid \${f.severity === 'CRITICAL' ? 'var(--danger)' : 'var(--warning)'}">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                  <strong>\${f.title}</strong>
+                  <span class="badge badge-\${f.severity}">\${f.severity}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--primary);">\${f.assetName} (\${f.assetId})</div>
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.4rem 0;">\${f.symptoms || f.description}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Reported by: \${f.reportedBy} on \${new Date(f.reportedAt).toLocaleDateString()}</div>
+              </div>
+            \`).join('')}
+          </div>
+        \`;
+      }
+
+      // 11. REPORTING & CSV EXPORT
+      if (activeTab === 'reports') {
+        title.innerText = 'Reporting & Data Export Center';
+        container.innerHTML = \`
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
+            Download real persisted laboratory dataset exports in RFC 4180 standard CSV format for compliance, institutional audits, and data analysis.
+          </p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">📦 Assets & Equipment Inventory</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Full inventory register containing hardware classes, locations, conditions, acquisition values, and runtime statistics.
+              </p>
+              <a href="/api/reports/assets/csv" class="btn btn-primary" download>⬇ Download Assets CSV</a>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">📋 Equipment Custody & Checkouts</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Historical log of checkout requests, approvals, borrower usernames, issue conditions, and audit handovers.
+              </p>
+              <a href="/api/reports/checkouts/csv" class="btn btn-primary" download>⬇ Download Checkouts CSV</a>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">🔧 Maintenance & Expenditure Audit</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Work order tickets, root-cause analyses, technician records, replaced components, and cumulative repair costs.
+              </p>
+              <a href="/api/reports/maintenance/csv" class="btn btn-primary" download>⬇ Download Maintenance CSV</a>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">📜 Security & Audit Activity Trail</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Append-only operational timeline capturing all mutations, operator identities, and system events.
+              </p>
+              <a href="/api/reports/audit/csv" class="btn btn-primary" download>⬇ Download Audit Trail CSV</a>
+            </div>
+          </div>
+        \`;
+      }
+
+      // 12. USER DIRECTORY
+      if (activeTab === 'users') {
+        title.innerText = 'Laboratory User Administration';
+        const res = await apiFetch('/api/users');
+        const users = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Operator Name</th>
+                  <th>Role</th>
+                  <th>Department</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                \${users.map(u => \`
+                  <tr>
+                    <td>
+                      <strong>\${u.fullName}</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted)">@\${u.username} • \${u.email}</div>
+                    </td>
+                    <td><span class="badge badge-\${u.role}">\${u.role}</span></td>
+                    <td>\${u.department}</td>
+                    <td><span style="color: var(--success); font-size: 0.8rem; font-weight: 600;">● Active</span></td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted)">\${new Date(u.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                \`).join('')}
+              </tbody>
+            </table>
+          </div>
+        \`;
+      }
+
+      // 13. AUDIT ACTIVITY LOGS
+      if (activeTab === 'logs') {
+        title.innerText = 'Immutable System Audit Activity';
+        const res = await apiFetch('/api/activity-logs');
+        const logs = res?.data?.content || [];
+
+        container.innerHTML = \`
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>Target Entity</th>
+                  <th>Operator</th>
+                  <th>Event Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                \${logs.map(l => \`
+                  <tr>
+                    <td style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">\${new Date(l.timestamp).toLocaleString()}</td>
+                    <td><span class="badge" style="background: rgba(6, 182, 212, 0.15); color: var(--primary)">\${l.action}</span></td>
+                    <td><strong>\${l.entityType}</strong> (\${l.entityId})</td>
+                    <td>\${l.performedBy}</td>
+                    <td style="color: var(--text-secondary)">\${l.details}</td>
+                  </tr>
+                \`).join('')}
+              </tbody>
+            </table>
+          </div>
+        \`;
+      }
+
+      // 14. SYSTEM HEALTH OBSERVABILITY
+      if (activeTab === 'health') {
+        title.innerText = 'Platform Health & Diagnostic Observability';
+        const res = await apiFetch('/api/health/system');
+        const h = res || {};
+
+        container.innerHTML = \`
+          <div class="grid-4">
+            <div class="stat-card">
+              <div class="stat-lbl">Engine Health</div>
+              <div class="stat-val" style="color: var(--success)">\${h.status || 'UP'}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">HTTP / REST Subsystem</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">System Uptime</div>
+              <div class="stat-val" style="color: var(--primary)">\${h.uptimeSeconds || 0}s</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">Zero crash interruptions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Memory (Heap)</div>
+              <div class="stat-val" style="color: var(--secondary)">\${h.memory?.heapUsedMb || 0} MB</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">RSS: \${h.memory?.rssMb || 0} MB</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Telemetry Stream</div>
+              <div class="stat-val" style="color: var(--warning)">\${h.telemetrySimulator?.connectedDevicesCount || 0}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted)">Active device feeds</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.85rem;">Database Schema & Collection Metrics</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+              \${Object.entries(h.database?.collections || {}).map(([k, v]) => \`
+                <div style="background: var(--bg-card); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border);">
+                  <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">\${k}</div>
+                  <strong style="font-size: 1.25rem; color: var(--primary)">\${v} documents</strong>
+                </div>
+              \`).join('')}
+            </div>
+          </div>
+        \`;
+      }
+    }
+
+    // ---------------- MODALS & ACTIONS ----------------
+    function openCommandPalette() {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="cmd-palette" onclick="event.stopPropagation()">
+            <input type="text" id="cmdSearchInput" class="cmd-input" placeholder="Type a command or search assets, projects, work orders..." oninput="handleCommandSearch(this.value)">
+            <div class="cmd-results" id="cmdResults">
+              <div class="cmd-item" onclick="switchTab('dashboard'); closeModal();">📊 Go to Mission Command</div>
+              <div class="cmd-item" onclick="switchTab('digitalTwin'); closeModal();">🗺️ Open Digital Twin Studio</div>
+              <div class="cmd-item" onclick="switchTab('telemetry'); closeModal();">🤖 Inspect Robot Fleet Telemetry</div>
+              <div class="cmd-item" onclick="switchTab('predictive'); closeModal();">🔮 View Predictive Health Risk Scores</div>
+              <div class="cmd-item" onclick="switchTab('scheduling'); closeModal();">📅 Open Reservation Schedule</div>
+              <div class="cmd-item" onclick="switchTab('reports'); closeModal();">📑 Export CSV Reports</div>
+            </div>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+      setTimeout(() => document.getElementById('cmdSearchInput').focus(), 50);
+    }
+
+    async function handleCommandSearch(val) {
+      const c = document.getElementById('cmdResults');
+      if (!val.trim()) {
+        c.innerHTML = \`
+          <div class="cmd-item" onclick="switchTab('dashboard'); closeModal();">📊 Go to Mission Command</div>
+          <div class="cmd-item" onclick="switchTab('digitalTwin'); closeModal();">🗺️ Open Digital Twin Studio</div>
+          <div class="cmd-item" onclick="switchTab('telemetry'); closeModal();">🤖 Inspect Robot Fleet Telemetry</div>
+          <div class="cmd-item" onclick="switchTab('predictive'); closeModal();">🔮 View Predictive Health Risk Scores</div>
+          <div class="cmd-item" onclick="switchTab('scheduling'); closeModal();">📅 Open Reservation Schedule</div>
+          <div class="cmd-item" onclick="switchTab('reports'); closeModal();">📑 Export CSV Reports</div>
+        \`;
+        return;
+      }
+      const res = await apiFetch('/api/search?q=' + encodeURIComponent(val));
+      if (!res || !res.data) return;
+      const d = res.data;
+      let html = '';
+
+      if (d.assets.length > 0) {
+        html += '<div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; padding: 4px 8px;">ASSETS</div>';
+        d.assets.forEach(a => {
+          html += \`<div class="cmd-item" onclick="switchTab('assets'); closeModal();">📦 \${a.name} (\${a.assetId})</div>\`;
+        });
+      }
+      if (d.projects.length > 0) {
+        html += '<div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; padding: 4px 8px;">PROJECTS</div>';
+        d.projects.forEach(p => {
+          html += \`<div class="cmd-item" onclick="switchTab('projects'); closeModal();">🚀 \${p.name} (\${p.code})</div>\`;
+        });
+      }
+      if (d.maintenance.length > 0) {
+        html += '<div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; padding: 4px 8px;">MAINTENANCE</div>';
+        d.maintenance.forEach(m => {
+          html += \`<div class="cmd-item" onclick="switchTab('maintenance'); closeModal();">🔧 \${m.assetName}: \${m.issueDescription}</div>\`;
+        });
+      }
+      c.innerHTML = html || '<div style="padding: 1rem; color: var(--text-muted); text-align: center;">No matching entities found.</div>';
+    }
+
+    function viewAssetQr(assetId, assetName) {
+      const decodedName = decodeURIComponent(assetName);
+      const m = document.getElementById('modalContainer');
+      const qrSvg = generateQrSvg('http://localhost:3000/assets?id=' + assetId);
+
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" style="max-width: 440px;" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Equipment QR Tag</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+              <div style="margin-bottom: 1rem; display: flex; justify-content: center;">
+                \${qrSvg}
+              </div>
+              <h4 style="font-size: 1.1rem; margin-bottom: 0.25rem;">\${decodedName}</h4>
+              <div style="font-family: 'JetBrains Mono', monospace; color: var(--primary); font-weight: 700; font-size: 1.05rem; margin-bottom: 0.5rem;">\${assetId}</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">
+                Scan via camera to instantly verify equipment ownership, maintenance history, and authorized research allocations.
+              </p>
+            </div>
+            <div class="modal-ftr">
+              <button class="btn btn-outline" onclick="window.print()">🖨️ Print Physical Tag</button>
+              <button class="btn btn-primary" onclick="closeModal()">Done</button>
+            </div>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    function openReservationModal() {
+      const m = document.getElementById('modalContainer');
+      m.innerHTML = \`
+        <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
+          <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-hdr">
+              <h3>Book Hardware Resource</h3>
+              <button onclick="closeModal()" class="btn btn-outline" style="padding: 0.2rem 0.5rem;">✕</button>
+            </div>
+            <form onsubmit="handleCreateReservation(event)">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Equipment to Reserve *</label>
+                  <select id="res_assetId" class="form-control" required>
+                    <option value="RB-ROBOT-001">TurtleBot 4 Mobile Base (RB-ROBOT-001)</option>
+                    <option value="RB-TEST-004">Rigol DS1054Z Digital Scope (RB-TEST-004)</option>
+                    <option value="RB-LIDAR-003">RPLIDAR A1 360° Scanner (RB-LIDAR-003)</option>
+                    <option value="RB-MOTOR-027">Dynamixel MX-64AT Actuator (RB-MOTOR-027)</option>
+                  </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div class="form-group">
+                    <label class="form-label">Start Date *</label>
+                    <input type="date" id="res_start" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">End Date *</label>
+                    <input type="date" id="res_end" class="form-control" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Supervised Research Project *</label>
+                  <input type="text" id="res_project" class="form-control" placeholder="e.g. Swarm Rovers Experiment" required>
+                </div>
+              </div>
+              <div class="modal-ftr">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Confirm Reservation</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      \`;
+      m.style.display = 'block';
+    }
+
+    async function handleCreateReservation(e) {
+      e.preventDefault();
+      const payload = {
+        assetId: document.getElementById('res_assetId').value,
+        startDate: document.getElementById('res_start').value,
+        endDate: document.getElementById('res_end').value,
+        projectName: document.getElementById('res_project').value,
+        reservedBy: currentUsername
+      };
+      const res = await apiFetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res && res.success) {
+        showToast('Resource reservation confirmed!');
+        closeModal();
+        renderCurrentView();
+      } else if (res && res.conflict) {
+        alert(res.message + '\\n\\nRecommended Available Alternative:\\n' + (res.alternatives[0] ? res.alternatives[0].name : 'None in this category'));
+      } else {
+        showToast(res?.message || 'Reservation failed', true);
+      }
+    }
+
+    async function cancelReservation(id) {
+      if (!confirm('Cancel this equipment booking?')) return;
+      await apiFetch('/api/reservations/' + id, { method: 'DELETE' });
+      showToast('Reservation cancelled');
+      renderCurrentView();
+    }
+
+    async function dispatchDeviceCommand(devId, cmd) {
+      const res = await apiFetch('/api/telemetry/devices/' + devId + '/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd })
+      });
+      if (res && res.success) {
+        showToast('Command executed: ' + cmd);
+        renderCurrentView();
+      }
+    }
+
+    function toggleNotifications() {
+      apiFetch('/api/notifications/read-all', { method: 'POST' });
+      document.getElementById('notifBadge').innerText = '0';
+      showToast('Notifications checked & marked read');
+    }
+
+    function closeModal() {
+      document.getElementById('modalContainer').style.display = 'none';
+    }
+    function closeModalOnOverlay(e) {
+      if (e.target.classList.contains('modal-overlay')) closeModal();
+    }
+
+    // Initialize
+    renderCurrentView();
+  </script>
+</body>
+</html>`;
+}

@@ -40,3 +40,4 @@ export const activityApi = {
     return res.data?.data;
   }
 };
+

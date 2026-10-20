@@ -87,3 +87,4 @@ public class AssetController {
         return ResponseEntity.ok(ApiResponse.success(assetService.searchAssets(query, category, status)));
     }
 }
+

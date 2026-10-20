@@ -6,3 +6,4 @@ public enum FaultSeverity {
     HIGH,
     CRITICAL
 }
+

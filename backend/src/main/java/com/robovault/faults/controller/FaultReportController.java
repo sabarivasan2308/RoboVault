@@ -99,3 +99,4 @@ public class FaultReportController {
         return ResponseEntity.ok(ApiResponse.success("Converted to maintenance case", faultService.convertToMaintenance(id, technician, actor)));
     }
 }
+

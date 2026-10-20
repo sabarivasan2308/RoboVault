@@ -70,3 +70,4 @@ public class PaginatedResponse<T> {
         this.last = last;
     }
 }
+

@@ -210,3 +210,4 @@ public class FaultReport {
         this.updatedAt = updatedAt;
     }
 }
+

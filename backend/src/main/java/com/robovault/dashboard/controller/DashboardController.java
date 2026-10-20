@@ -23,3 +23,4 @@ public class DashboardController {
         return ResponseEntity.ok(ApiResponse.success(dashboardService.getSummary()));
     }
 }
+

@@ -61,3 +61,4 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("User status updated", userService.toggleUserStatus(id, active)));
     }
 }
+

@@ -19,3 +19,4 @@ public interface CheckoutRecordRepository extends MongoRepository<CheckoutRecord
     List<CheckoutRecord> findByAssetIdAndStatusIn(String assetId, List<CheckoutStatus> statuses);
     long countByStatus(CheckoutStatus status);
 }
+

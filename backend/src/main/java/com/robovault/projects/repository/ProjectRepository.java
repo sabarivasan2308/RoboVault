@@ -16,3 +16,4 @@ public interface ProjectRepository extends MongoRepository<Project, String> {
     Page<Project> findByStatus(ProjectStatus status, Pageable pageable);
     long countByStatus(ProjectStatus status);
 }
+

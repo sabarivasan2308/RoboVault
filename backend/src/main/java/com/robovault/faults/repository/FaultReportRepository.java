@@ -18,3 +18,4 @@ public interface FaultReportRepository extends MongoRepository<FaultReport, Stri
     long countByStatus(FaultStatus status);
     long countByStatusNot(FaultStatus status);
 }
+

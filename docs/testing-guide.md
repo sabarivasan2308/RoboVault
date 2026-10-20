@@ -94,3 +94,4 @@ Spring Boot Actuator endpoints provide real-time container health:
   `GET http://localhost:8080/actuator/health`
 - **Application Metrics**:
   `GET http://localhost:8080/actuator/metrics`
+

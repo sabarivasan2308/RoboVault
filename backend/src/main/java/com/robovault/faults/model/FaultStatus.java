@@ -9,3 +9,4 @@ public enum FaultStatus {
     CLOSED,
     REJECTED
 }
+

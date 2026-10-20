@@ -15,3 +15,4 @@ export const EmptyState = ({ message = "No records found", actionText, onAction 
 };
 
 export default EmptyState;
+

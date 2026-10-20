@@ -276,3 +276,4 @@ public class CheckoutRecord {
         this.updatedAt = updatedAt;
     }
 }
+

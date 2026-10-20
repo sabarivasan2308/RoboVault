@@ -87,3 +87,4 @@ public class MaintenanceController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance closed & asset restored", maintenanceService.closeRecord(id, actor)));
     }
 }
+

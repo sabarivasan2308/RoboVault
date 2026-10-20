@@ -17,3 +17,4 @@ public interface MaintenanceRecordRepository extends MongoRepository<Maintenance
     List<MaintenanceRecord> findByAssetId(String assetId);
     long countByStatus(MaintenanceStatus status);
 }
+

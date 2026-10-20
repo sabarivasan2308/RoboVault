@@ -377,3 +377,4 @@ export const AssetsPage = () => {
 };
 
 export default AssetsPage;
+

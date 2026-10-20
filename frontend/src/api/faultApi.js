@@ -37,3 +37,4 @@ export const faultApi = {
     return res.data?.data;
   }
 };
+

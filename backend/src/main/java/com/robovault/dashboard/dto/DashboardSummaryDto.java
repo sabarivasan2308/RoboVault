@@ -175,3 +175,4 @@ public class DashboardSummaryDto {
         this.recentActivity = recentActivity;
     }
 }
+

@@ -230,3 +230,4 @@ curl -X POST http://localhost:8080/api/auth/login \
 - `POST /api/users`: Create user account
 - `PUT /api/users/{id}`: Modify user profile and role
 - `PATCH /api/users/{id}/status`: Toggle active status (`{ "active": false }`)
+

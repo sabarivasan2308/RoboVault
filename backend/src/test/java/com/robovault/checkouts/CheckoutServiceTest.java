@@ -135,3 +135,4 @@ class CheckoutServiceTest {
         verify(assetRepository, times(1)).save(availableAsset);
     }
 }
+

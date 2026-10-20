@@ -10,3 +10,4 @@ public enum UserRole {
         return "ROLE_" + this.name();
     }
 }
+

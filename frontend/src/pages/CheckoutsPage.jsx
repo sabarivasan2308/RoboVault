@@ -367,3 +367,4 @@ export const CheckoutsPage = () => {
 };
 
 export default CheckoutsPage;
+

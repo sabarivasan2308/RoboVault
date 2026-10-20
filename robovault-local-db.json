@@ -1,0 +1,651 @@
+{
+  "users": [
+    {
+      "id": "usr-1",
+      "username": "admin",
+      "email": "admin@robovault.io",
+      "password": "Admin123!",
+      "fullName": "Dr. Sarah Vance",
+      "role": "ADMIN",
+      "department": "Robotics Engineering",
+      "active": true,
+      "createdAt": "2026-10-01T08:00:00Z"
+    },
+    {
+      "id": "usr-2",
+      "username": "assistant",
+      "email": "assistant@robovault.io",
+      "password": "Assistant123!",
+      "fullName": "Alex Rivera",
+      "role": "LAB_ASSISTANT",
+      "department": "Robotics Lab Operations",
+      "active": true,
+      "createdAt": "2026-10-05T09:30:00Z"
+    },
+    {
+      "id": "usr-3",
+      "username": "faculty",
+      "email": "faculty@robovault.io",
+      "password": "Faculty123!",
+      "fullName": "Prof. David Chen",
+      "role": "FACULTY",
+      "department": "Autonomous Systems Research",
+      "active": true,
+      "createdAt": "2026-10-08T11:00:00Z"
+    },
+    {
+      "id": "usr-4",
+      "username": "student",
+      "email": "student@robovault.io",
+      "password": "Student123!",
+      "fullName": "Maya Patel",
+      "role": "STUDENT",
+      "department": "Robotics & Mechatronics",
+      "active": true,
+      "createdAt": "2026-10-12T14:15:00Z"
+    }
+  ],
+  "assets": [
+    {
+      "id": "ast-1",
+      "assetId": "RB-STM32-001",
+      "name": "STM32F4 Discovery Board",
+      "category": "MICROCONTROLLER",
+      "brand": "STMicroelectronics",
+      "model": "STM32F407G-DISC1",
+      "serialNumber": "STM-2024-8841",
+      "quantity": 12,
+      "availableQuantity": 9,
+      "location": "Rack A1 - Bin 04",
+      "status": "AVAILABLE",
+      "condition": "GOOD",
+      "description": "ARM Cortex-M4 discovery kit with ST-LINK debugger.",
+      "createdAt": "2026-10-01T10:00:00Z"
+    },
+    {
+      "id": "ast-2",
+      "assetId": "RB-ESP32-014",
+      "name": "ESP32 NodeMCU Wi-Fi/BT Module",
+      "category": "DEVELOPMENT_BOARDS",
+      "brand": "Espressif",
+      "model": "ESP32-WROOM-32D",
+      "serialNumber": "ESP-2024-0412",
+      "quantity": 25,
+      "availableQuantity": 21,
+      "location": "Rack B2 - Shelf 1",
+      "status": "AVAILABLE",
+      "condition": "GOOD",
+      "description": "Dual-core MCU with Wi-Fi & Bluetooth telemetry.",
+      "createdAt": "2026-10-01T10:30:00Z"
+    },
+    {
+      "id": "ast-3",
+      "assetId": "RB-LIDAR-003",
+      "name": "RPLIDAR A1 360° Laser Scanner",
+      "category": "SENSORS",
+      "brand": "Slamtec",
+      "model": "A1M8",
+      "serialNumber": "RPL-2023-7721",
+      "quantity": 5,
+      "availableQuantity": 3,
+      "location": "Cabinet C - Shelf 2",
+      "status": "AVAILABLE",
+      "condition": "GOOD",
+      "description": "360 degree 12-meter laser distance measurement scanner.",
+      "createdAt": "2026-10-02T11:00:00Z"
+    },
+    {
+      "id": "ast-4",
+      "assetId": "RB-ROBOT-001",
+      "name": "TurtleBot 4 Mobile Base",
+      "category": "ROBOTS",
+      "brand": "Clearpath Robotics",
+      "model": "TB4-STANDARD",
+      "serialNumber": "TB4-2024-0019",
+      "quantity": 2,
+      "availableQuantity": 1,
+      "location": "Ground Bay 1",
+      "status": "IN_USE",
+      "condition": "GOOD",
+      "description": "Autonomous ROS 2 mobile manipulation research robot.",
+      "createdAt": "2026-10-02T11:30:00Z"
+    },
+    {
+      "id": "ast-5",
+      "assetId": "RB-MOTOR-027",
+      "name": "Dynamixel MX-64AT Smart Actuator",
+      "category": "MOTORS",
+      "brand": "ROBOTIS",
+      "model": "MX-64AT",
+      "serialNumber": "DYN-2023-9932",
+      "quantity": 8,
+      "availableQuantity": 6,
+      "location": "Rack D3 - Bin 12",
+      "status": "AVAILABLE",
+      "condition": "GOOD",
+      "description": "High-torque RS485 networkable servo with PID feedback.",
+      "createdAt": "2026-10-03T14:00:00Z"
+    },
+    {
+      "id": "ast-6",
+      "assetId": "RB-DRIVER-008",
+      "name": "L298N Dual H-Bridge Motor Driver",
+      "category": "MOTOR_DRIVERS",
+      "brand": "Generic",
+      "model": "L298N-RED",
+      "serialNumber": "L29-2024-1102",
+      "quantity": 30,
+      "availableQuantity": 28,
+      "location": "Rack D2 - Tray 01",
+      "status": "AVAILABLE",
+      "condition": "GOOD",
+      "description": "Dual stepper and DC motor driver module up to 2A.",
+      "createdAt": "2026-10-04T09:00:00Z"
+    },
+    {
+      "id": "ast-7",
+      "assetId": "RB-3DPR-002",
+      "name": "Prusa MK4 3D Printer",
+      "category": "PRINTERS_3D",
+      "brand": "Prusa Research",
+      "model": "MK4-ORIGINAL",
+      "serialNumber": "PRU-2024-5511",
+      "quantity": 3,
+      "availableQuantity": 2,
+      "location": "Fabrication Corner",
+      "status": "MAINTENANCE",
+      "condition": "FAIR",
+      "description": "High-precision FDM 3D printer with Nextruder.",
+      "createdAt": "2026-10-05T15:00:00Z"
+    },
+    {
+      "id": "ast-8",
+      "assetId": "RB-TEST-004",
+      "name": "Rigol DS1054Z Digital Oscilloscope",
+      "category": "TEST_EQUIPMENT",
+      "brand": "Rigol",
+      "model": "DS1054Z",
+      "serialNumber": "RIG-2023-3329",
+      "quantity": 4,
+      "availableQuantity": 3,
+      "location": "Bench Station 4",
+      "status": "AVAILABLE",
+      "condition": "GOOD",
+      "description": "50 MHz 4-channel digital storage oscilloscope.",
+      "createdAt": "2026-10-06T10:00:00Z"
+    }
+  ],
+  "checkouts": [
+    {
+      "id": "chk-1",
+      "requestId": "REQ-20261020-001",
+      "requesterUsername": "student",
+      "requesterFullName": "Maya Patel",
+      "assetId": "RB-STM32-001",
+      "assetName": "STM32F4 Discovery Board",
+      "quantity": 1,
+      "projectName": "Autonomous Swarm Rovers",
+      "requestDate": "2026-10-18T10:00:00Z",
+      "dueDate": "2026-10-28T17:00:00Z",
+      "status": "ISSUED",
+      "approverUsername": "admin",
+      "approvedAt": "2026-10-18T11:00:00Z",
+      "issuedAt": "2026-10-18T11:30:00Z",
+      "returnedAt": null,
+      "issueCondition": "GOOD",
+      "returnCondition": null,
+      "notes": "Required for embedded RTOS telemetry lab."
+    },
+    {
+      "id": "chk-2",
+      "requestId": "REQ-20261020-002",
+      "requesterUsername": "student",
+      "requesterFullName": "Maya Patel",
+      "assetId": "RB-ROBOT-001",
+      "assetName": "TurtleBot 4 Mobile Base",
+      "quantity": 1,
+      "projectName": "Autonomous Swarm Rovers",
+      "requestDate": "2026-10-19T09:00:00Z",
+      "dueDate": "2026-10-25T17:00:00Z",
+      "status": "ISSUED",
+      "approverUsername": "admin",
+      "approvedAt": "2026-10-19T10:00:00Z",
+      "issuedAt": "2026-10-19T10:30:00Z",
+      "returnedAt": null,
+      "issueCondition": "GOOD",
+      "returnCondition": null,
+      "notes": "Mapping algorithms validation."
+    },
+    {
+      "id": "chk-3",
+      "requestId": "REQ-20261020-003",
+      "requesterUsername": "faculty",
+      "requesterFullName": "Prof. David Chen",
+      "assetId": "RB-LIDAR-003",
+      "assetName": "RPLIDAR A1 360° Laser Scanner",
+      "quantity": 1,
+      "projectName": "Indoor Drone Navigation",
+      "requestDate": "2026-10-20T08:00:00Z",
+      "dueDate": "2026-10-30T17:00:00Z",
+      "status": "PENDING",
+      "approverUsername": null,
+      "approvedAt": null,
+      "issuedAt": null,
+      "returnedAt": null,
+      "issueCondition": null,
+      "returnCondition": null,
+      "notes": "Autonomous flight test bench."
+    }
+  ],
+  "maintenance": [
+    {
+      "id": "mnt-1",
+      "assetId": "RB-3DPR-002",
+      "assetName": "Prusa MK4 3D Printer",
+      "status": "IN_PROGRESS",
+      "priority": "HIGH",
+      "assignedTechnician": "Alex Rivera",
+      "issueDescription": "Hotend thermistor reading erratic temperature fluctuations.",
+      "diagnosisFindings": "Loose wire connector on cartridge thermistor board.",
+      "actionsTaken": "Replaced thermistor cartridge and recalibrated PID loops.",
+      "partsReplaced": [
+        "E3D Thermistor Cartridge"
+      ],
+      "cost": 18.5,
+      "startDate": "2026-10-19T14:00:00Z",
+      "completionDate": null,
+      "openedBy": "admin"
+    }
+  ],
+  "projects": [
+    {
+      "id": "prj-1",
+      "code": "PRJ-SWARM-2026",
+      "name": "Autonomous Swarm Rovers",
+      "description": "Multi-agent decentralized navigation and obstacle avoidance in unstructured environments.",
+      "leadFaculty": "Prof. David Chen",
+      "leadStudent": "Maya Patel",
+      "department": "Autonomous Systems Research",
+      "status": "ACTIVE",
+      "startDate": "2026-09-01",
+      "targetCompletionDate": "2027-05-30",
+      "allocations": [
+        {
+          "id": "alc-1",
+          "assetId": "RB-ESP32-014",
+          "assetName": "ESP32 NodeMCU Module",
+          "quantity": 4,
+          "allocatedAt": "2026-09-15T10:00:00Z",
+          "allocatedBy": "admin"
+        }
+      ]
+    },
+    {
+      "id": "prj-2",
+      "code": "PRJ-ARM-ROBO",
+      "name": "6-DOF Prosthetic Arm",
+      "description": "EMG sensor-driven robotic bionic arm with compliance force feedback.",
+      "leadFaculty": "Dr. Sarah Vance",
+      "leadStudent": "Maya Patel",
+      "department": "Robotics Engineering",
+      "status": "ACTIVE",
+      "startDate": "2026-10-01",
+      "targetCompletionDate": "2027-04-15",
+      "allocations": [
+        {
+          "id": "alc-2",
+          "assetId": "RB-MOTOR-027",
+          "assetName": "Dynamixel MX-64AT Smart Actuator",
+          "quantity": 2,
+          "allocatedAt": "2026-10-10T11:00:00Z",
+          "allocatedBy": "admin"
+        }
+      ]
+    }
+  ],
+  "faults": [
+    {
+      "id": "flt-1",
+      "assetId": "RB-3DPR-002",
+      "assetName": "Prusa MK4 3D Printer",
+      "title": "Thermistor Temp Sensor Glitch",
+      "description": "Thermal runaway error during PLA preheating cycle.",
+      "symptoms": "Display throws Mintemp error after 40 seconds.",
+      "severity": "HIGH",
+      "status": "IN_REPAIR",
+      "reportedBy": "student",
+      "reportedAt": "2026-10-19T13:30:00Z",
+      "assignedTechnician": "Alex Rivera",
+      "resolution": null
+    },
+    {
+      "id": "flt-2",
+      "assetId": "RB-DRIVER-008",
+      "name": "L298N Motor Driver",
+      "title": "Channel B Overheat",
+      "description": "Channel B heatsink gets hot even with no motor attached.",
+      "symptoms": "Pungent burning odor when powered at 12V.",
+      "severity": "CRITICAL",
+      "status": "REPORTED",
+      "reportedBy": "maya",
+      "reportedAt": "2026-10-20T08:15:00Z",
+      "assignedTechnician": null,
+      "resolution": null
+    }
+  ],
+  "activityLogs": [
+    {
+      "id": "act-1792502657498",
+      "action": "RESERVATION_CREATED",
+      "entityType": "RESERVATION",
+      "entityId": "res-1792502657497",
+      "performedBy": "Test Researcher",
+      "details": "Reserved TurtleBot 4 Mobile Base from 2026-11-02 to 2026-11-05",
+      "timestamp": "2026-10-20T13:24:17.498Z"
+    },
+    {
+      "id": "act-1",
+      "action": "CHECKOUT_ISSUED",
+      "entityType": "CHECKOUT",
+      "entityId": "REQ-20261020-001",
+      "performedBy": "admin",
+      "details": "STM32F4 Discovery Board handed over to Maya Patel in GOOD condition.",
+      "timestamp": "2026-10-18T11:30:00Z"
+    },
+    {
+      "id": "act-2",
+      "action": "MAINTENANCE_OPENED",
+      "entityType": "MAINTENANCE",
+      "entityId": "RB-3DPR-002",
+      "performedBy": "admin",
+      "details": "Opened HIGH priority work order for Prusa MK4 3D Printer.",
+      "timestamp": "2026-10-19T14:00:00Z"
+    },
+    {
+      "id": "act-3",
+      "action": "FAULT_REPORTED",
+      "entityType": "FAULT",
+      "entityId": "RB-DRIVER-008",
+      "performedBy": "student",
+      "details": "Fault ticket logged: Channel B Overheat.",
+      "timestamp": "2026-10-20T08:15:00Z"
+    }
+  ],
+  "reservations": [
+    {
+      "id": "res-1",
+      "assetId": "RB-ROBOT-001",
+      "assetName": "TurtleBot 4 Mobile Base",
+      "reservedBy": "Prof. David Chen",
+      "projectName": "Indoor Drone Navigation",
+      "startDate": "2026-11-01",
+      "endDate": "2026-11-08",
+      "status": "CONFIRMED",
+      "notes": "Scheduled lidar integration experiment"
+    },
+    {
+      "id": "res-2",
+      "assetId": "RB-TEST-004",
+      "assetName": "Rigol DS1054Z Digital Oscilloscope",
+      "reservedBy": "Maya Patel",
+      "projectName": "6-DOF Prosthetic Arm",
+      "startDate": "2026-10-25",
+      "endDate": "2026-10-27",
+      "status": "CONFIRMED",
+      "notes": "Signal conditioning for myoelectric leads"
+    },
+    {
+      "id": "res-1792502657497",
+      "assetId": "RB-ROBOT-001",
+      "assetName": "TurtleBot 4 Mobile Base",
+      "reservedBy": "Test Researcher",
+      "projectName": "Autonomous Research",
+      "startDate": "2026-11-02",
+      "endDate": "2026-11-05",
+      "status": "CONFIRMED",
+      "notes": ""
+    }
+  ],
+  "devices": [
+    {
+      "id": "dev-tb4-01",
+      "name": "TurtleBot 4 (Alpha)",
+      "assetId": "RB-ROBOT-001",
+      "type": "MOBILE_ROBOT",
+      "status": "RUNNING",
+      "battery": 78.2,
+      "temperature": 45.4,
+      "motorRpm": 115,
+      "runtimeHours": 642.79,
+      "connectionStatus": "ONLINE",
+      "ipAddress": "192.168.10.101",
+      "mode": "AUTONOMOUS_NAV",
+      "lastPing": "2026-10-20T13:25:35.831Z"
+    },
+    {
+      "id": "dev-arm-02",
+      "name": "Bionic Arm Workstation",
+      "assetId": "RB-MOTOR-027",
+      "type": "ARM_MANIPULATOR",
+      "status": "RUNNING",
+      "battery": 90.2,
+      "temperature": 40.2,
+      "motorRpm": 111,
+      "runtimeHours": 981.29,
+      "connectionStatus": "ONLINE",
+      "ipAddress": "192.168.10.104",
+      "mode": "TRAJECTORY_FOLLOWING",
+      "lastPing": "2026-10-20T13:25:35.831Z"
+    },
+    {
+      "id": "dev-prusa-03",
+      "name": "Prusa MK4 Fabrication Cell",
+      "assetId": "RB-3DPR-002",
+      "type": "PRINTERS_3D",
+      "status": "WARNING",
+      "battery": 100,
+      "temperature": 68.4,
+      "motorRpm": 0,
+      "runtimeHours": 1452.1,
+      "connectionStatus": "ONLINE",
+      "ipAddress": "192.168.10.112",
+      "mode": "THERMAL_DIAGNOSTIC",
+      "lastPing": "2026-10-20T13:25:35.831Z"
+    },
+    {
+      "id": "dev-drone-04",
+      "name": "Crazyflie Swarm Drone A1",
+      "assetId": "RB-ESP32-014",
+      "type": "UAV_DRONE",
+      "status": "CHARGING",
+      "battery": 46.5,
+      "temperature": 29.1,
+      "motorRpm": 0,
+      "runtimeHours": 214.3,
+      "connectionStatus": "ONLINE",
+      "ipAddress": "192.168.10.120",
+      "mode": "DOCK_RECHARGE",
+      "lastPing": "2026-10-20T13:25:35.831Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1792502657499",
+      "title": "Resource Reserved",
+      "message": "Test Researcher scheduled TurtleBot 4 Mobile Base for 2026-11-02.",
+      "severity": "MEDIUM",
+      "entityType": "RESERVATION",
+      "entityId": "res-1792502657497",
+      "read": false,
+      "timestamp": "2026-10-20T13:24:17.499Z"
+    },
+    {
+      "id": "notif-1",
+      "title": "Critical Fault Detected",
+      "message": "Channel B Overheat reported on L298N Motor Driver (RB-DRIVER-008).",
+      "severity": "CRITICAL",
+      "entityType": "FAULT",
+      "entityId": "flt-2",
+      "read": false,
+      "timestamp": "2026-10-20T08:16:00Z"
+    },
+    {
+      "id": "notif-2",
+      "title": "Pending Equipment Request",
+      "message": "Prof. David Chen requested RPLIDAR A1 360° Scanner.",
+      "severity": "MEDIUM",
+      "entityType": "CHECKOUT",
+      "entityId": "chk-3",
+      "read": false,
+      "timestamp": "2026-10-20T08:02:00Z"
+    },
+    {
+      "id": "notif-3",
+      "title": "Predictive Service Recommendation",
+      "message": "Prusa MK4 exceeds 1,400 runtime hrs. Nextruder inspection advised.",
+      "severity": "HIGH",
+      "entityType": "MAINTENANCE",
+      "entityId": "ast-7",
+      "read": true,
+      "timestamp": "2026-10-19T14:10:00Z"
+    }
+  ],
+  "digitalTwin": {
+    "zones": [
+      {
+        "id": "zone-1",
+        "name": "Ground Autonomous Robotics Arena",
+        "x": 20,
+        "y": 20,
+        "width": 440,
+        "height": 260,
+        "color": "#06b6d4"
+      },
+      {
+        "id": "zone-2",
+        "name": "Drone Aerial Flight Cage",
+        "x": 480,
+        "y": 20,
+        "width": 440,
+        "height": 260,
+        "color": "#3b82f6"
+      },
+      {
+        "id": "zone-3",
+        "name": "Embedded & Microcontroller Benches",
+        "x": 20,
+        "y": 300,
+        "width": 440,
+        "height": 260,
+        "color": "#10b981"
+      },
+      {
+        "id": "zone-4",
+        "name": "Additive Manufacturing & Rapid Prototyping",
+        "x": 480,
+        "y": 300,
+        "width": 440,
+        "height": 260,
+        "color": "#f59e0b"
+      }
+    ],
+    "workstations": [
+      {
+        "id": "ws-1",
+        "label": "Rover Bay 1",
+        "x": 60,
+        "y": 70,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-ROBOT-001",
+        "assetName": "TurtleBot 4 Mobile Base",
+        "status": "IN_USE",
+        "operator": "Maya Patel"
+      },
+      {
+        "id": "ws-2",
+        "label": "LIDAR Test Bench",
+        "x": 250,
+        "y": 70,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-LIDAR-003",
+        "assetName": "RPLIDAR A1 360° Scanner",
+        "status": "AVAILABLE",
+        "operator": "None"
+      },
+      {
+        "id": "ws-3",
+        "label": "Drone Helipad Alpha",
+        "x": 520,
+        "y": 70,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-ESP32-014",
+        "assetName": "Swarm Telemetry Node",
+        "status": "CHARGING",
+        "operator": "Autonomous System"
+      },
+      {
+        "id": "ws-4",
+        "label": "Bionic Arm Jig",
+        "x": 710,
+        "y": 70,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-MOTOR-027",
+        "assetName": "Dynamixel MX-64AT Actuator",
+        "status": "IN_USE",
+        "operator": "Dr. Sarah Vance"
+      },
+      {
+        "id": "ws-5",
+        "label": "STM32 Station A",
+        "x": 60,
+        "y": 350,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-STM32-001",
+        "assetName": "STM32F4 Discovery Board",
+        "status": "AVAILABLE",
+        "operator": "None"
+      },
+      {
+        "id": "ws-6",
+        "label": "Oscilloscope Station",
+        "x": 250,
+        "y": 350,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-TEST-004",
+        "assetName": "Rigol DS1054Z Scope",
+        "status": "AVAILABLE",
+        "operator": "None"
+      },
+      {
+        "id": "ws-7",
+        "label": "3D Printer Cell 1",
+        "x": 520,
+        "y": 350,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-3DPR-002",
+        "assetName": "Prusa MK4 3D Printer",
+        "status": "MAINTENANCE",
+        "operator": "Alex Rivera"
+      },
+      {
+        "id": "ws-8",
+        "label": "Motor Driver Bench",
+        "x": 710,
+        "y": 350,
+        "width": 140,
+        "height": 90,
+        "assetId": "RB-DRIVER-008",
+        "assetName": "L298N Dual H-Bridge",
+        "status": "DAMAGED",
+        "operator": "None"
+      }
+    ]
+  }
+}

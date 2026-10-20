@@ -132,3 +132,4 @@ public class AssetCreateDto {
         this.description = description;
     }
 }
+

@@ -82,3 +82,4 @@ class AssetServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> assetService.getAssetById("non-existent"));
     }
 }
+
