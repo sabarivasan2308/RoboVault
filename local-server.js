@@ -1619,11 +1619,16 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ==================== FRONTEND WEB PORTAL ====================
-  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
   res.end(renderNexusUi());
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(`⚡ ROBO VAULT NEXUS PLATFORM RUNNING AT:`);
   console.log(`   http://localhost:${PORT}`);
