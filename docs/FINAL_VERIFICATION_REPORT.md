@@ -5,10 +5,12 @@
 **Active Local Daemon:** `http://localhost:3000` (Listening, Task 1780)  
 **Git Branch:** `main`  
 **Configured GitHub Remote:** `https://github.com/sabarivasan2308/RoboVault`  
-**Automated Verification Suite:** `run-verify.bat` — **15/15 Test Suites PASSED (100%)**  
-**Deterministic Mission Lifecycle Suite:** `run-lifecycle-test.bat` — **6/6 Subtests PASSED (100%)**  
-**DOM & Navigation Render Suite:** `run-verify-render.bat` — **12/12 Tabs Render Verified (100%)**  
+**Automated Verification Suite:** `run-verify.bat` — **15/15 Test Suites PASSED (100%)**<br>
+**Deterministic Mission Lifecycle Suite:** `run-lifecycle-test.bat` — **6/6 Subtests PASSED (100%)**<br>
+**End-to-End Mission Workflow Suite:** `run-verify-workflows.bat` — **8/8 Workflows PASSED (100%)**<br>
+**DOM & Navigation Render Suite:** `run-verify-render.bat` — **12/12 Tabs Render Verified (100%)**<br>
 **Headless Browser & Live DOM Suite:** `run-verify-browser.bat` — **4/4 Checks PASSED (100%)**<br>
+**Vite Frontend Production Build:** `build-frontend.bat` — **Built in 4.90s, Zero Oversized Chunk Warnings**<br>
 **Model Evaluation Benchmark:** `run-model-eval.bat` — **98.4% Accuracy, 100% Recall, 96.77% F1-Score (500 Samples)**  
 
 ---
@@ -306,6 +308,69 @@ Disk persisted status: COMPLETED completedAt: 2026-10-20T16:16:37.451Z
     - Robot: Crazyflie Swarm Drone A1 (dev-drone-04) -> Status: AVAILABLE, Mode: IDLE_STANDBY, Battery: 93.6%
 
 🎉 ALL HEADLESS BROWSER & LIVE SYSTEM CHECKS PASSED (100%)!
+```
+
+### End-to-End Mission Workflow & Hazard Safety Suite Output (8/8 Passed):
+```text
+========================================================
+🧪 END-TO-END AUDIT: MISSION WORKFLOWS & INVARIANTS
+========================================================
+
+[Workflow 1/8] Mission Dispatch & Robot Assignment
+  [✓] Sortie created: MSN-957185-631 -> Robot: TurtleBot 4 (Alpha) (dev-tb4-01), Status: READY, Path: 4 steps
+
+[Workflow 2/8] Dynamic Obstacle Injection & Safety Invariants
+  [✓] Mission started: status=IN_TRANSIT
+  [✓] Obstacle injected at [1, 3]: Hazard placed at (1, 3). Dynamic A* path recalculated with 6 remaining steps.
+  Waiting 4.5s for simulation ticker collision evaluation...
+  [✓] Mission state after obstacle: Status=IN_TRANSIT, BlockedReason=None (re-routed)
+
+[Workflow 3/8] Obstacle Clearing & Safe Traversal Resumption
+  [✓] Obstacles cleared: Cleared 1 dynamic hazard(s). 0 mission(s) resumed.
+
+[Workflow 4/8] Mission Completion & Idempotency Check
+  [✓] First complete call: status=200, missionStatus=COMPLETED, progress=100%, completedAt=2026-10-21T01:26:01.745Z
+  [✓] Second complete call (Idempotency): status=200, message=Mission is already completed
+
+[Workflow 5/8] Mission State Persistence After Reload / Refresh
+  [✓] Queried state from server: Status=COMPLETED, Progress=100%, CompletedAt=2026-10-21T01:26:01.745Z
+
+[Workflow 6/8] Robot Release to AVAILABLE / IDLE_STANDBY Invariant
+  [✓] Released Robot state: Status=AVAILABLE, Mode=IDLE_STANDBY, isBusy=false
+
+[Workflow 7/8] On-Disk Persistence & Audit Trail Verification
+  [✓] On-Disk JSON: id=MSN-957185-631, status=COMPLETED, progress=100%, completedAt=2026-10-21T01:26:01.745Z
+  [✓] Activity Audit Log verified: CreatedLog=true, CompletedLog=true
+
+[Workflow 8/8] Error Handling & Validation Invariants
+  [✓] Start completed mission rejected: HTTP 400 -> Cannot start a mission that is already COMPLETED. Use re-dispatch to create a new sortie.
+  [✓] Resume completed mission rejected: HTTP 400 -> Cannot resume a mission that is already COMPLETED.
+  [✓] Abort completed mission rejected: HTTP 400 -> Cannot abort a mission that is already COMPLETED.
+  [✓] Invalid destination rejected: HTTP 400 -> Invalid destination workstation ID 'ws-invalid-999'. Must be one of: ws-1, ws-2, ws-3, ws-4, ws-5, ws-6, ws-7, ws-8.
+  [✓] Busy robot conflict rejected: HTTP 409 -> Conflict: Robot 'TurtleBot 4 (Alpha)' is already assigned to active mission MSN-961773-514 (IN_TRANSIT). Select another robot or wait for mission completion.
+  [✓] Test cleanup: completed temporary conflict test sortie MSN-961773-514
+
+========================================================
+🎉 ALL 8/8 MISSION WORKFLOWS & SAFETY INVARIANTS PASSED!
+========================================================
+```
+
+### Production Frontend Build & Rollup Optimization Output:
+```text
+> robovault-frontend@1.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 2370 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.95 kB │ gzip:   0.49 kB
+dist/assets/index-D5reJ8uT.css    8.08 kB │ gzip:   2.32 kB
+dist/assets/index-DhnB8ble.js   152.68 kB │ gzip:  39.91 kB
+dist/assets/vendor-DHrqXyRo.js  163.90 kB │ gzip:  53.46 kB
+dist/assets/charts-Cj3ToGWn.js  407.07 kB │ gzip: 109.81 kB
+✓ built in 4.90s (Zero chunk size warnings; manualChunks code splitting active)
 ```
 
 ### Explainable Predictive Model Benchmark Output:

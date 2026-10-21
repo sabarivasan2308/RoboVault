@@ -43,4 +43,5 @@ mongo_data/
 # OS specific
 Desktop.ini
 $RECYCLE.BIN/
+*.bak
 
