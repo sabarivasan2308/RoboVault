@@ -33,6 +33,7 @@ jobs:
         run: mvn clean package -DskipTests=false
         env:
           SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/robovault_test
+          JWT_SECRET: CISecretKeyForBuildingRoboVaultBackendMustBeAtLeast32Bytes!
 
   frontend-build:
     name: Frontend Build & Test (React)

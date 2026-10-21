@@ -16,14 +16,24 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
+    private static final int MIN_KEY_BYTES = 32; // 256 bits minimum required by HMAC-SHA256 (RFC 7518)
 
     private final SecretKey key;
     private final long jwtExpirationInMs;
 
     public JwtTokenProvider(
-            @Value("${robovault.jwt.secret:RoboVaultEnterpriseSecretKeyForRoboticsLaboratory2026SecureJWT}") String jwtSecret,
+            @Value("${robovault.jwt.secret:}") String jwtSecret,
             @Value("${robovault.jwt.expiration-ms:86400000}") long jwtExpirationInMs) {
-        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET environment variable is required and must not be empty. Insecure default fallbacks are disallowed in production.");
+        }
+        byte[] secretBytes = jwtSecret.trim().getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < MIN_KEY_BYTES) {
+            throw new IllegalArgumentException(
+                    "JWT_SECRET must be at least " + (MIN_KEY_BYTES * 8) + " bits (" + MIN_KEY_BYTES + " bytes) for secure HMAC signing. Provided: " + secretBytes.length + " bytes.");
+        }
+        this.key = Keys.hmacShaKeyFor(secretBytes);
         this.jwtExpirationInMs = jwtExpirationInMs;
     }
 
@@ -65,4 +75,3 @@ public class JwtTokenProvider {
         return false;
     }
 }
-
