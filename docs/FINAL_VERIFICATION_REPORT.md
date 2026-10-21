@@ -367,10 +367,32 @@ rendering chunks...
 computing gzip size...
 dist/index.html                   0.95 kB │ gzip:   0.49 kB
 dist/assets/index-D5reJ8uT.css    8.08 kB │ gzip:   2.32 kB
-dist/assets/index-DhnB8ble.js   152.68 kB │ gzip:  39.91 kB
-dist/assets/vendor-DHrqXyRo.js  163.90 kB │ gzip:  53.46 kB
-dist/assets/charts-Cj3ToGWn.js  407.07 kB │ gzip: 109.81 kB
-✓ built in 4.90s (Zero chunk size warnings; manualChunks code splitting active)
+dist/assets/index-BfzKGiPu.js   152.68 kB │ gzip:  39.91 kB
+dist/assets/vendor-CwOfsXbR.js  164.36 kB │ gzip:  53.52 kB
+dist/assets/charts-BFg1UkaU.js  407.13 kB │ gzip: 109.82 kB
+✓ built in 4.83s (Zero chunk size warnings; manualChunks code splitting active)
+```
+
+### Dependency Security Remediation & Audit Findings:
+```text
+================================================================
+🔒 DEPENDENCY SECURITY AUDIT (npm audit)
+================================================================
+Initial Vulnerability Count: 4 (1 High, 3 Moderate)
+- esbuild <= 0.24.2 (GHSA-67mh-4wv8-2f99) - Moderate [RESOLVED via override]
+- vite <= 6.4.3 (GHSA-4w7w-66w2-5vf9, GHSA-fx2h-pf6j-xcff, GHSA-587h-7wmj-h5pm) - High [REQUIRES MAJOR VITE UPGRADE]
+- react-router 6.0.0 - 7.17.0 (GHSA-wrjc-x8rr-h8h6, GHSA-337j-9hxr-rhxg) - Moderate [REQUIRES MAJOR REACT-ROUTER UPGRADE]
+- react-router-dom 6.0.0-alpha.0 - 7.17.0 (via react-router) - Moderate [REQUIRES MAJOR REACT-ROUTER UPGRADE]
+
+Remediation Action:
+- Added "overrides": { "esbuild": "^0.25.0" } in frontend/package.json.
+- Upgraded transitive esbuild from 0.21.5 to 0.25.12 deterministically in package-lock.json.
+- Completely eliminated GHSA-67mh-4wv8-2f99 without breaking changes or API regressions.
+
+Post-Remediation Vulnerability Count: 3 (1 High, 2 Moderate)
+- Remaining vulnerabilities require breaking major upgrades (Vite 8.x and React Router 7.x).
+- In accordance with safety directives (Requirement 10), major breaking upgrades were halted to preserve application stability and avoid breaking declarative SPA routing contracts.
+================================================================
 ```
 
 ### Explainable Predictive Model Benchmark Output:
