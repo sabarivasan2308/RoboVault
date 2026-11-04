@@ -1,196 +1,223 @@
-# ⚡ ROBO VAULT — Robotics Lab Asset & Maintenance Platform
+# 🤖 ROBO VAULT NEXUS
+### Robotics Operations Intelligence & Digital Twin Platform
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5.1-646CFF.svg)](https://vitejs.dev/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.0-green.svg)](https://www.mongodb.com/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+**RoboVault NEXUS** is a centralized robotics operations platform designed to help robotics laboratories and research environments monitor robotic assets, simulate autonomous missions, visualize laboratory environments, identify potential equipment health issues, and manage operational resources.
 
-**RoboVault** is an institutional-grade, full-stack management platform engineered for university robotics laboratories, mechatronics workshops, and autonomous systems research groups. It eliminates chaotic spreadsheets and manual register clipboards by digitizing hardware custody, return inspections, project allocations, and preventive/corrective maintenance workflows.
+The project aims to bring multiple robotics operations into one unified dashboard.
 
 ---
 
-## 📌 Architecture & Tech Stack
+## 🎯 Problem Statement
+
+Robotics laboratories often manage robot monitoring, mission planning, equipment maintenance, and resource allocation through separate tools and manual processes.
+
+This can lead to:
+- Limited visibility into robotic asset status.
+- Difficulties in planning robot movement and avoiding obstacles.
+- Delayed identification of abnormal equipment conditions.
+- Inefficient utilization of laboratory resources.
+- Fragmented operational information and reporting.
+
+**RoboVault NEXUS addresses these challenges through a unified robotics operations interface.**
+
+---
+
+## ✨ Key Features & Modules
+
+### 1. Fleet Mission Control
+- Simulated autonomous robot mission execution.
+- Grid-based navigation and path planning.
+- A* pathfinding algorithm with Manhattan-distance heuristic.
+- Obstacle detection and route replanning.
+- Quick Dispatch and mission lifecycle management.
+- Emergency halt functionality.
+
+### 2. Fleet Telemetry
+- Centralized monitoring of simulated robotic assets.
+- Battery-level monitoring.
+- Temperature and RPM monitoring.
+- Velocity and signal-strength information.
+- Equipment status visualization.
+- Simulated calibration and emergency-stop controls.
+
+### 3. Digital Twin Studio
+- Digital representation of a robotics laboratory.
+- 2D laboratory layout visualization.
+- Research zones and workstation representation.
+- Visualization of the robotics environment.
+
+### 4. Predictive Health
+- Sensor-based anomaly analysis.
+- Explainable equipment health-risk scoring.
+- Identification of unusual operating conditions.
+- Maintenance-risk visualization.
+- Work-order support.
+
+### 5. Intelligent Resource Scheduling
+- Resource allocation and scheduling.
+- Laboratory workstation coordination.
+- Operational resource management.
+
+### 6. Research Intelligence
+- What-If scenario exploration.
+- Operational analysis and simulation support.
+- Decision-support capabilities.
+
+### 7. Reports & Analytics
+- Operational reporting.
+- Data visualization.
+- CSV export support.
+
+---
+
+## 🏗️ System Architecture
+
+RoboVault has evolved through two development stages.
+
+### Tier A – NEXUS Prototype
+
+The current demonstration prototype uses a local Node.js application with a browser-based interface.
 
 ```text
-  React 18 SPA (Vite + Recharts)
-              │
-              ▼  (HTTP / JWT Bearer)
-   Nginx Reverse Proxy (:80 / :3000)
-              │
-              ▼
-  Spring Boot 3.2.3 REST API (:8080)
-   - Spring Security + JJWT 0.12.5
-   - Spring Data MongoDB
-   - Spring Boot Actuator
-              │
-              ▼
-  MongoDB 6.0 Database (:27017)
-              │
-              ▼
-  Docker Volume (`mongo_data:/data/db`) ➔ Persistent Storage
+             User / Administrator
+                     |
+                     v
+              NEXUS Dashboard
+                     |
+                     v
+             Node.js Application
+                     |
+        +------------+-------------+
+        |            |             |
+        v            v             v
+    Fleet &       Digital       Predictive
+    Mission        Twin           Health
+    Control
+        |            |             |
+        +------------+-------------+
+                     |
+                     v
+           Simulation / Local Data
 ```
 
-### Detailed Documentation
-- [System Architecture & Data Flows](docs/architecture.md)
-- [Database Schema & Concurrency Strategy](docs/database-schema.md)
-- [REST API Integration Guide & Curl Examples](docs/api-guide.md)
-- [Testing & Quality Assurance Guide](docs/testing-guide.md)
-- [Production Deployment Guide (Ubuntu / AWS EC2)](docs/deployment-guide.md)
+### Tier B – Containerized Architecture
+
+A further development stage explores a modular full-stack architecture.
+
+```text
+             React Frontend
+                    |
+                    v
+             Spring Boot API
+                    |
+                    v
+                MongoDB
+                    |
+                    v
+           Persistent Data Storage
+```
+
+Technologies explored in this stage include Docker, React, Spring Boot, MongoDB, Spring Security, and JWT authentication.
+
+**Development status:** The NEXUS prototype and the containerized architecture are separate development stages. Full integration and deployment validation remain part of ongoing development.
 
 ---
 
-## 👥 Built-in Personas & Test Credentials
+## 🛠️ Technology Stack
 
-The backend auto-seeds four test user accounts with pre-hashed BCrypt passwords:
-
-| Role | Username | Email | Password | Primary Capabilities |
-|---|---|---|---|---|
-| **ADMIN** | `admin` | `admin@robovault.io` | `Admin123!` | Complete inventory oversight, user management, approval authority, audit trail |
-| **LAB_ASSISTANT** | `assistant` | `assistant@robovault.io` | `Assistant123!` | Checkouts fulfillment, physical returns inspection, diagnostic repairs |
-| **FACULTY** | `faculty` | `faculty@robovault.io` | `Faculty123!` | Research project management, equipment pooling, defect reporting |
-| **STUDENT** | `student` | `student@robovault.io` | `Student123!` | Catalog browsing, borrow requests, status tracking, defect logs |
-
-*Tip: The web login screen includes one-click persona quick-fill buttons for instant evaluation.*
-
----
-
-## 🚀 Key Modules & Capabilities
-
-1. **Mission Control Dashboard**: Live Recharts visualizations calculating real-time inventory utilization, status breakdown, category distribution, and overdue checkouts directly from MongoDB aggregates.
-2. **12 Asset Categories**: Robots, Microcontrollers, Development Boards, Sensors, Motors, Motor Drivers, Communication Modules, Power Supplies, Electronic Components, Tools, Test Equipment, and 3D Printers.
-3. **Custody State Machine**:
-   $$\text{Submit Request} \longrightarrow \text{Approve/Reject} \longrightarrow \text{Issue} \ (\text{IN\_USE}) \longrightarrow \text{Return} \longrightarrow \text{Inspection} \longrightarrow \text{AVAILABLE / MAINTENANCE}$$
-4. **Maintenance & Repairs**: Corrective/preventative work orders tracking technician assignment, diagnosis findings, replaced parts, repair expenses, and operational restoration.
-5. **Project Hardware Allocation**: Dedicate pools of microcontrollers and sensors to specific research projects without double-allocating inventory.
-6. **Fault Reporting**: Field defect submissions with severity rating (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`) and one-click escalation to the maintenance pipeline.
-7. **Security & Auditing**: Stateless HMAC-SHA256 JWT authentication, backend `@PreAuthorize` role evaluation, and an immutable system activity log.
+| Area | Technologies |
+|---|---|
+| Frontend | HTML, CSS, JavaScript |
+| Local Application | Node.js |
+| Pathfinding | A* Search Algorithm |
+| Data Visualization | Dashboard-based visualizations |
+| Local Data | JSON |
+| Containerized Frontend | React, Vite |
+| Backend Architecture | Java, Spring Boot |
+| Database Architecture | MongoDB |
+| Deployment Exploration | Docker, Docker Compose |
+| Version Control | Git, GitHub |
 
 ---
 
-## ⚡ Quick Start with Docker Compose
+## 🚀 Running the NEXUS Prototype
 
-To launch all three tiers (MongoDB, Spring Boot, React) simultaneously:
+### Prerequisites
+- Node.js installed.
+- Git installed.
+- A modern web browser.
+
+### Steps
+
+Clone the repository:
 
 ```bash
-# Clone the repository
 git clone https://github.com/sabarivasan2308/RoboVault.git
+```
+
+Navigate to the project directory:
+
+```bash
 cd RoboVault
-
-# Build and start all services in detached mode
-docker compose up -d --build
 ```
 
-### Endpoints:
-- **Frontend Web UI**: [http://localhost:3000](http://localhost:3000)
-- **Spring Boot REST API**: [http://localhost:8080/api/dashboard/summary](http://localhost:8080/api/dashboard/summary)
-- **Swagger / OpenAPI 3**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **Spring Boot Actuator Health**: [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
-- **MongoDB Connection**: `mongodb://localhost:27017/robovault`
+Start the local NEXUS application:
+
+```bash
+node local-server.js
+```
+
+Open the application:
+
+```text
+http://localhost:3000
+```
+
+*Note: This startup instruction applies to the Tier A prototype and assumes the local server file and its dependencies are available.*
 
 ---
 
-## 💻 Local Development Setup (Without Docker)
+## 🧪 Testing & Validation
 
-### Prerequisites:
-- Java JDK 17 or 21
-- Apache Maven 3.8+
-- Node.js 18+ & NPM
-- MongoDB 6.0 running locally on port `27017`
+The project is being developed and tested through:
+- Application route and navigation checks.
+- Mission lifecycle verification.
+- Pathfinding and obstacle-handling scenarios.
+- Telemetry visualization checks.
+- Dashboard and module validation.
+- Frontend build and deployment checks.
 
-### 1. Start MongoDB
-Ensure MongoDB is running locally on `localhost:27017`:
-```bash
-mongod --dbpath /data/db
-```
-
-### 2. Start Backend (Spring Boot)
-```bash
-cd backend
-mvn clean spring-boot:run
-```
-*The backend seeds default users, assets, checkouts, and maintenance records on first boot.*
-
-### 3. Start Frontend (React + Vite)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Testing results should be updated as additional functionality is validated.
 
 ---
 
-## 📂 Project Directory Structure
+## 🔮 Future Scope
 
-```
-RoboVault/
-├── .env.example                 # Environment configuration template
-├── docker-compose.yml           # Multi-container orchestration (App + DB + UI)
-├── robovault-api-collection.json# Postman / Insomnia API collection
-├── ci/
-│   └── ci.yml                   # CI test and packaging workflow
-├── docs/
-│   ├── architecture.md          # System design & Mermaid diagrams
-│   ├── database-schema.md       # Collections, indexes, concurrency
-│   ├── api-guide.md             # REST endpoints & curl examples
-│   ├── testing-guide.md         # Unit testing & persistence verification
-│   └── deployment-guide.md      # AWS EC2 / Ubuntu deployment guide
-├── backend/
-│   ├── Dockerfile               # Multi-stage Maven build + Eclipse Temurin 21 JRE
-│   ├── pom.xml                  # Spring Boot 3.2.3 dependencies
-│   └── src/
-│       ├── main/java/com/robovault/
-│       │   ├── RoboVaultApplication.java
-│       │   ├── activity/        # Audit event logs
-│       │   ├── assets/          # 12 hardware categories, stock management
-│       │   ├── auth/            # Login, Me, Logout endpoints
-│       │   ├── checkouts/       # Custody lifecycle state machine
-│       │   ├── common/          # Global exception handler & ApiResponse
-│       │   ├── config/          # Mongo, OpenAPI & DataInitializer seed
-│       │   ├── dashboard/       # Aggregated KPIs & Recharts metrics
-│       │   ├── faults/          # Defect reports & escalation
-│       │   ├── maintenance/     # Diagnostics, parts, repair cost tracking
-│       │   ├── projects/        # Research team hardware pools
-│       │   ├── security/        # JWT filter, UserPrincipal, SecurityConfig
-│       │   └── users/           # User administration & role management
-│       └── test/java/com/robovault/
-│           ├── assets/AssetServiceTest.java
-│           └── checkouts/CheckoutServiceTest.java
-└── frontend/
-    ├── Dockerfile               # Vite build + Nginx reverse proxy
-    ├── nginx.conf               # Web server & /api proxy configuration
-    ├── package.json             # React 18, Vite, Lucide, Recharts
-    ├── vite.config.js           # Vite dev proxy configuration
-    └── src/
-        ├── api/                 # Axios clients for all backend modules
-        ├── auth/                # AuthContext, ProtectedRoute, RoleGuard
-        ├── components/          # StatCards, StatusBadges, Pagination
-        ├── layouts/             # Responsive Sidebar, Topbar, AppLayout
-        ├── pages/               # Dashboard, Assets, Checkouts, Maintenance,
-        │                        # Projects, Faults, Users, Audit, Profile
-        ├── routes/              # Declarative AppRoutes
-        └── styles/main.css      # Robotics dark theme design system
-```
+- Integration with physical robots and robotic hardware.
+- Real-time IoT-based telemetry collection.
+- Machine-learning-based predictive maintenance.
+- AI-assisted mission planning and optimization.
+- Advanced digital-twin synchronization.
+- Cloud-based deployment.
+- Multi-user access and role-based operational controls.
+- Enhanced analytics and automated reporting.
 
 ---
 
-## 🧪 Automated Testing
+## 📌 Project Status
 
-Run the backend unit test suite:
-```bash
-cd backend
-mvn test
-```
+**Current stage:** Working software prototype and ongoing development.
 
-Build the frontend production package:
-```bash
-cd frontend
-npm run build
-```
+The current NEXUS demonstration uses simulated robotic assets and telemetry. Physical robot integration and real-world predictive-model validation are future development objectives.
+
+---
+
+## 👨‍💻 Repository
+
+**GitHub:** https://github.com/sabarivasan2308/RoboVault
 
 ---
 
 ## 📄 License
-This project is licensed under the MIT License.
+
+Refer to the repository's license file for licensing information.
