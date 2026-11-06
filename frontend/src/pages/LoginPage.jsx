@@ -23,7 +23,22 @@ export const LoginPage = () => {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+      if (!err.response) {
+        setError(
+          `Unable to connect to backend server (${err.message || 'Network Error'}). ` +
+          `Please check that the backend API is running and reachable.`
+        );
+      } else if (err.response.status === 404) {
+        setError(
+          `Backend API endpoint not found (HTTP 404). ` +
+          `The backend server is running locally on your laptop and has not been deployed to a public cloud URL yet. ` +
+          `Configure VITE_API_BASE_URL in Vercel to point to your live backend.`
+        );
+      } else if (err.response.status === 401 || err.response.status === 403) {
+        setError(err.response?.data?.message || 'Invalid email or password. Please check your credentials.');
+      } else {
+        setError(err.response?.data?.message || err.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

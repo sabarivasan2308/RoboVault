@@ -34,11 +34,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authApi.login(email, password);
-    const { accessToken, user: userData } = response.data;
-    setToken(accessToken);
+    const payload = response?.data || response || {};
+    const authToken = payload.accessToken || payload.token || response?.token;
+    const userData = payload.user || (payload.id ? payload : null) || response?.user;
+    setToken(authToken);
     setUser(userData);
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+    if (authToken) localStorage.setItem('token', authToken);
+    if (userData) localStorage.setItem('user', JSON.stringify(userData));
     return userData;
   };
 
