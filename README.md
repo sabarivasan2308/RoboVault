@@ -70,6 +70,16 @@ This can lead to:
 
 ---
 
+## 🎥 Project Demonstration
+
+Watch the ROBO VAULT NEXUS project walkthrough and feature demonstration:
+
+[▶️ Watch ROBONEXUS.mp4 – Project Demo](https://github.com/sabarivasan2308/RoboVault/blob/main/ROBONEXUS.mp4)
+
+The video provides a walkthrough of the project and its implemented modules, including the Fleet Mission Simulation.
+
+---
+
 ## 🏗️ System Architecture
 
 RoboVault has evolved through two development stages.
